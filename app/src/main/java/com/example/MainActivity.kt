@@ -110,93 +110,94 @@ fun ExpenseTrackerApp(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            // Nested scrollable column for safe edge rendering
-            Column(
+            // Highly optimized LazyColumn for scroll performance (60 FPS rendering & recycling)
+            androidx.compose.foundation.lazy.LazyColumn(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState())
             ) {
-                // Top App Bar
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 22.dp, bottom = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "OVERVIEW",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                letterSpacing = 3.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextDarkSecondary.copy(alpha = 0.6f)
-                            )
-                        )
-                        Text(
-                            text = let {
-                                val currentMonth = SimpleDateFormat("MMMM", Locale.US).format(Date())
-                                currentMonth
-                            },
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Normal,
-                                fontSize = 28.sp,
-                                fontFamily = FontFamily.Serif,
-                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                                color = TextDarkPrimary
-                            )
-                        )
-                    }
-
-                    // Avatar keyframe matching HTML border-[#2D2D2D]
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(DarkSurface)
-                            .border(1.dp, Color(0xFF2D2D2D), CircleShape)
-                            .clickable { showQuickSeedInfo = !showQuickSeedInfo },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile",
-                            tint = TextDarkPrimary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Custom Settings info overlay
-                AnimatedVisibility(visible = showQuickSeedInfo) {
-                    Card(
+                // Top App Bar & Settings info overlay are rendered as the first static item
+                item {
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 16.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated)
+                            .padding(top = 22.dp, bottom = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Info, contentDescription = "Tips", tint = GoldAccent, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "Sophisticated Ledger Mode Active",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
+                        Column {
+                            Text(
+                                text = "OVERVIEW",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    letterSpacing = 3.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextDarkSecondary.copy(alpha = 0.6f)
+                                )
+                            )
+                            Text(
+                                text = let {
+                                    val currentMonth = SimpleDateFormat("MMMM", Locale.US).format(Date())
+                                    currentMonth
+                                },
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 28.sp,
+                                    fontFamily = FontFamily.Serif,
+                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                                     color = TextDarkPrimary
                                 )
-                                Text(
-                                    text = "Tap categories below to filter, or press '＋' to register live records synchronously into the secure Room unit.",
-                                    fontSize = 11.sp,
-                                    color = TextDarkSecondary
-                                )
+                            )
+                        }
+
+                        // Avatar keyframe matching HTML border-[#2D2D2D]
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(DarkSurface)
+                                .border(1.dp, Color(0xFF2D2D2D), CircleShape)
+                                .clickable { showQuickSeedInfo = !showQuickSeedInfo },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Profile",
+                                tint = TextDarkPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Custom Settings info overlay
+                    AnimatedVisibility(visible = showQuickSeedInfo) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Info, contentDescription = "Tips", tint = GoldAccent, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "Sophisticated Ledger Mode Active",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextDarkPrimary
+                                    )
+                                    Text(
+                                        text = "Tap categories below to filter, or press '＋' to register live records synchronously into the secure Room unit.",
+                                        fontSize = 11.sp,
+                                        color = TextDarkSecondary
+                                    )
+                                }
                             }
                         }
                     }
@@ -205,164 +206,166 @@ fun ExpenseTrackerApp(
                 // Main Area Toggled by Simulated Bottom Tabs
                 when (activeTab) {
                     "HOME" -> {
-                        // Balance & Elegant stats area
-                        AestheticBalanceCard(
-                            balance = balance,
-                            income = totalIncome,
-                            expense = totalExpense,
-                            formatter = currencyFormatter
-                        )
+                        item {
+                            // Balance & Elegant stats area
+                            AestheticBalanceCard(
+                                balance = balance,
+                                income = totalIncome,
+                                expense = totalExpense,
+                                formatter = currencyFormatter
+                            )
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                            Spacer(modifier = Modifier.height(20.dp))
 
-                        // Action Shortcuts Bar (Add, Transfer, Insights Toggle, Settings Overlay)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Column 1: Add (Inverse Button style)
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier.weight(1f)
+                            // Action Shortcuts Bar (Add, Transfer, Insights Toggle, Settings Overlay)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(54.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(OffWhitePrimary)
-                                        .clickable { showAddDialog = true },
-                                    contentAlignment = Alignment.Center
+                                // Column 1: Add (Inverse Button style)
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.weight(1f)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "Log",
-                                        tint = Color(0xFF0F0F0F),
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                                Text(
-                                    text = "Add",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextDarkSecondary.copy(alpha = 0.8f),
-                                    letterSpacing = 1.sp
-                                )
-                            }
-
-                            // Column 2: Quick income seed trigger ("Transfer")
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(54.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .border(1.dp, Color(0xFF2D2D2D), RoundedCornerShape(16.dp))
-                                        .clickable {
-                                            // Quick seed realistic premium income to demonstrate state updates
-                                            viewModel.addExpense(
-                                                title = "Aesthetic Client Bonus",
-                                                amount = 950.0,
-                                                category = "Salary",
-                                                type = "INCOME",
-                                                note = "Project milestone release bonus"
-                                            )
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.TrendingUp,
-                                        contentDescription = "Income Quick Seed",
-                                        tint = TextDarkPrimary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                                Text(
-                                    text = "In-Bonus",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextDarkSecondary.copy(alpha = 0.8f),
-                                    letterSpacing = 1.sp
-                                )
-                            }
-
-                            // Column 3: Insight Toggle Chart
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(54.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .border(
-                                            width = 1.dp,
-                                            color = if (showInsightsSection) GoldAccent else Color(0xFF2D2D2D),
-                                            shape = RoundedCornerShape(16.dp)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(54.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(OffWhitePrimary)
+                                            .clickable { showAddDialog = true },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = "Log",
+                                            tint = Color(0xFF0F0F0F),
+                                            modifier = Modifier.size(24.dp)
                                         )
-                                        .background(if (showInsightsSection) GoldAccent.copy(alpha = 0.1f) else Color.Transparent)
-                                        .clickable { showInsightsSection = !showInsightsSection },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PieChart,
-                                        contentDescription = "Insights Toggle",
-                                        tint = if (showInsightsSection) GoldAccent else TextDarkPrimary,
-                                        modifier = Modifier.size(20.dp)
+                                    }
+                                    Text(
+                                        text = "Add",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextDarkSecondary.copy(alpha = 0.8f),
+                                        letterSpacing = 1.sp
                                     )
                                 }
-                                Text(
-                                    text = "Insights",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (showInsightsSection) GoldAccent else TextDarkSecondary.copy(alpha = 0.8f),
-                                    letterSpacing = 1.sp
-                                )
+
+                                // Column 2: Quick income seed trigger ("Transfer")
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(54.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .border(1.dp, Color(0xFF2D2D2D), RoundedCornerShape(16.dp))
+                                            .clickable {
+                                                // Quick seed realistic premium income to demonstrate state updates
+                                                viewModel.addExpense(
+                                                    title = "Aesthetic Client Bonus",
+                                                    amount = 950.0,
+                                                    category = "Salary",
+                                                    type = "INCOME",
+                                                    note = "Project milestone release bonus"
+                                                )
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.TrendingUp,
+                                            contentDescription = "Income Quick Seed",
+                                            tint = TextDarkPrimary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = "In-Bonus",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextDarkSecondary.copy(alpha = 0.8f),
+                                        letterSpacing = 1.sp
+                                    )
+                                }
+
+                                // Column 3: Insight Toggle Chart
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(54.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .border(
+                                                width = 1.dp,
+                                                color = if (showInsightsSection) GoldAccent else Color(0xFF2D2D2D),
+                                                shape = RoundedCornerShape(16.dp)
+                                            )
+                                            .background(if (showInsightsSection) GoldAccent.copy(alpha = 0.1f) else Color.Transparent)
+                                            .clickable { showInsightsSection = !showInsightsSection },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.PieChart,
+                                            contentDescription = "Insights Toggle",
+                                            tint = if (showInsightsSection) GoldAccent else TextDarkPrimary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = "Insights",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (showInsightsSection) GoldAccent else TextDarkSecondary.copy(alpha = 0.8f),
+                                        letterSpacing = 1.sp
+                                    )
+                                }
+
+                                // Column 4: Reset DB or Limits toggler
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(54.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .border(1.dp, Color(0xFF2D2D2D), RoundedCornerShape(16.dp))
+                                            .clickable { showQuickSeedInfo = !showQuickSeedInfo },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Settings,
+                                            contentDescription = "Settings",
+                                            tint = TextDarkPrimary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = "Limits",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextDarkSecondary.copy(alpha = 0.8f),
+                                        letterSpacing = 1.sp
+                                    )
+                                }
                             }
 
-                            // Column 4: Reset DB or Limits toggler
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(54.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .border(1.dp, Color(0xFF2D2D2D), RoundedCornerShape(16.dp))
-                                        .clickable { showQuickSeedInfo = !showQuickSeedInfo },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Settings,
-                                        contentDescription = "Settings",
-                                        tint = TextDarkPrimary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                                Text(
-                                    text = "Limits",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextDarkSecondary.copy(alpha = 0.8f),
-                                    letterSpacing = 1.sp
-                                )
-                            }
+                            Spacer(modifier = Modifier.height(14.dp))
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
-
                         // Category Distribution Area
-                        AnimatedVisibility(visible = showInsightsSection) {
-                            Column {
+                        if (showInsightsSection) {
+                            item {
                                 AestheticAnalyticsCard(
                                     distribution = categoryDistribution,
                                     totalExpense = totalExpense,
@@ -372,203 +375,207 @@ fun ExpenseTrackerApp(
                             }
                         }
 
-                        // Search Bar & Filter Section
-                        AestheticFilterSection(
-                            searchQuery = searchQuery,
-                            onSearchChange = { viewModel.updateSearchQuery(it) },
-                            selectedType = selectedType,
-                            onTypeSelect = { viewModel.selectTypeFilter(it) },
-                            selectedCategory = selectedCategory,
-                            onCategorySelect = { viewModel.selectCategoryFilter(it) }
-                        )
-
-                        Spacer(modifier = Modifier.height(22.dp))
-
-                        // Title header for list matching "Recent Ledger -- View All"
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Recent Ledger",
-                                fontSize = 18.sp,
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Normal,
-                                color = TextDarkPrimary
+                        item {
+                            // Search Bar & Filter Section
+                            AestheticFilterSection(
+                                searchQuery = searchQuery,
+                                onSearchChange = { viewModel.updateSearchQuery(it) },
+                                selectedType = selectedType,
+                                onTypeSelect = { viewModel.selectTypeFilter(it) },
+                                selectedCategory = selectedCategory,
+                                onCategorySelect = { viewModel.selectCategoryFilter(it) }
                             )
-                            if (expenses.isNotEmpty()) {
+
+                            Spacer(modifier = Modifier.height(22.dp))
+
+                            // Recent Ledger Header and view all action
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = "VIEW ALL",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextDarkSecondary.copy(alpha = 0.4f),
-                                    letterSpacing = 1.sp,
-                                    modifier = Modifier.clickable {
-                                        viewModel.updateSearchQuery("")
-                                        viewModel.selectTypeFilter("ALL")
-                                        viewModel.selectCategoryFilter("ALL")
-                                    }
+                                    text = "Recent Ledger",
+                                    fontSize = 18.sp,
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Normal,
+                                    color = TextDarkPrimary
                                 )
+                                if (expenses.isNotEmpty()) {
+                                    Text(
+                                        text = "VIEW ALL",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextDarkSecondary.copy(alpha = 0.4f),
+                                        letterSpacing = 1.sp,
+                                        modifier = Modifier.clickable {
+                                            viewModel.updateSearchQuery("")
+                                            viewModel.selectTypeFilter("ALL")
+                                            viewModel.selectCategoryFilter("ALL")
+                                        }
+                                    )
+                                }
                             }
+
+                            Spacer(modifier = Modifier.height(12.dp))
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // List block
+                        // Highly performant list items with lazy rendering & item recycling
                         if (expenses.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(180.dp)
-                                    .clip(RoundedCornerShape(24.dp))
-                                    .background(DarkSurface)
-                                    .border(1.dp, Color(0xFF2D2D2D), RoundedCornerShape(24.dp))
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(180.dp)
+                                        .clip(RoundedCornerShape(24.dp))
+                                        .background(DarkSurface)
+                                        .border(1.dp, Color(0xFF2D2D2D), RoundedCornerShape(24.dp))
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Inbox,
-                                        contentDescription = "No receipts",
-                                        tint = TextDarkMuted,
-                                        modifier = Modifier.size(36.dp)
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "Zero matches found",
-                                        color = TextDarkSecondary,
-                                        fontFamily = FontFamily.Serif,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 14.sp
-                                    )
-                                    Text(
-                                        text = "Adjust filters to locate ledger notes",
-                                        color = TextDarkMuted,
-                                        fontSize = 12.sp,
-                                        textAlign = TextAlign.Center
-                                    )
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Inbox,
+                                            contentDescription = "No receipts",
+                                            tint = TextDarkMuted,
+                                            modifier = Modifier.size(36.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "Zero matches found",
+                                            color = TextDarkSecondary,
+                                            fontFamily = FontFamily.Serif,
+                                            fontWeight = FontWeight.Normal,
+                                            fontSize = 14.sp
+                                        )
+                                        Text(
+                                            text = "Adjust filters to locate ledger notes",
+                                            color = TextDarkMuted,
+                                            fontSize = 12.sp,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
                                 }
                             }
                         } else {
-                            // Inline list simulation inside the vertical scroll layout using Column
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                expenses.forEach { expense ->
-                                    TransactionItemRow(
-                                        expense = expense,
-                                        formatter = currencyFormatter,
-                                        onDelete = { viewModel.deleteExpense(expense.id) }
-                                    )
-                                }
+                            items(expenses, key = { it.id }) { expense ->
+                                TransactionItemRow(
+                                    expense = expense,
+                                    formatter = currencyFormatter,
+                                    onDelete = { viewModel.deleteExpense(expense.id) }
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
                             }
                         }
                     }
 
                     "STATS" -> {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = "Analytics Lounge",
-                                fontFamily = FontFamily.Serif,
-                                fontSize = 22.sp,
-                                color = TextDarkPrimary,
-                                modifier = Modifier.padding(vertical = 12.dp)
-                            )
-                            AestheticAnalyticsCard(
-                                distribution = categoryDistribution,
-                                totalExpense = totalExpense,
-                                formatter = currencyFormatter
-                            )
-                            Spacer(modifier = Modifier.height(20.dp))
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(24.dp),
-                                colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                                border = BorderStroke(1.dp, Color(0xFF2D2D2D))
-                            ) {
-                                Column(modifier = Modifier.padding(18.dp)) {
-                                    Text(
-                                        text = "BUDGET HEALTH REPORT",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextDarkSecondary,
-                                        letterSpacing = 1.sp
-                                    )
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    val percentStr = if (totalIncome > 0) String.format("%.0f%%", (totalExpense / totalIncome) * 100) else "0%"
-                                    Text(
-                                        text = "You have consumed $percentStr of your positive income streams this period.",
-                                        fontSize = 13.sp,
-                                        color = TextDarkPrimary
-                                    )
+                        item {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = "Analytics Lounge",
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 22.sp,
+                                    color = TextDarkPrimary,
+                                    modifier = Modifier.padding(vertical = 12.dp)
+                                )
+                                AestheticAnalyticsCard(
+                                    distribution = categoryDistribution,
+                                    totalExpense = totalExpense,
+                                    formatter = currencyFormatter
+                                )
+                                Spacer(modifier = Modifier.height(20.dp))
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(24.dp),
+                                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                                    border = BorderStroke(1.dp, Color(0xFF2D2D2D))
+                                ) {
+                                    Column(modifier = Modifier.padding(18.dp)) {
+                                        Text(
+                                            text = "BUDGET HEALTH REPORT",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextDarkSecondary,
+                                            letterSpacing = 1.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        val percentStr = if (totalIncome > 0) String.format("%.0f%%", (totalExpense / totalIncome) * 100) else "0%"
+                                        Text(
+                                            text = "You have consumed $percentStr of your positive income streams this period.",
+                                            fontSize = 13.sp,
+                                            color = TextDarkPrimary
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
 
                     "CARDS" -> {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = "Secure Ledger Accounts",
-                                fontFamily = FontFamily.Serif,
-                                fontSize = 22.sp,
-                                color = TextDarkPrimary,
-                                modifier = Modifier.padding(vertical = 12.dp)
-                            )
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp),
-                                shape = RoundedCornerShape(28.dp),
-                                border = BorderStroke(1.dp, Color(0xFF2D2D2D)),
-                                colors = CardDefaults.cardColors(containerColor = DarkSurface)
-                            ) {
-                                Box(
+                        item {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = "Secure Ledger Accounts",
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 22.sp,
+                                    color = TextDarkPrimary,
+                                    modifier = Modifier.padding(vertical = 12.dp)
+                                )
+                                Card(
                                     modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(24.dp)
+                                        .fillMaxWidth()
+                                        .height(200.dp),
+                                    shape = RoundedCornerShape(28.dp),
+                                    border = BorderStroke(1.dp, Color(0xFF2D2D2D)),
+                                    colors = CardDefaults.cardColors(containerColor = DarkSurface)
                                 ) {
-                                    Column(modifier = Modifier.align(Alignment.TopStart)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(24.dp)
+                                    ) {
+                                        Column(modifier = Modifier.align(Alignment.TopStart)) {
+                                            Text(
+                                                text = "OBSIDIAN DEBIT",
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = TextDarkSecondary,
+                                                letterSpacing = 2.sp
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = "Premium Onyx Member",
+                                                fontSize = 14.sp,
+                                                fontFamily = FontFamily.Serif,
+                                                color = TextDarkPrimary
+                                            )
+                                        }
                                         Text(
-                                            text = "OBSIDIAN DEBIT",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = TextDarkSecondary,
-                                            letterSpacing = 2.sp
+                                            text = "**** **** **** 8850",
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 16.sp,
+                                            color = TextDarkPrimary,
+                                            modifier = Modifier.align(Alignment.CenterStart)
                                         )
-                                        Spacer(modifier = Modifier.height(4.dp))
                                         Text(
-                                            text = "Premium Onyx Member",
-                                            fontSize = 14.sp,
+                                            text = "VIP LEDGER",
+                                            fontSize = 11.sp,
                                             fontFamily = FontFamily.Serif,
-                                            color = TextDarkPrimary
+                                            color = GoldAccent,
+                                            modifier = Modifier.align(Alignment.BottomEnd)
                                         )
                                     }
-                                    Text(
-                                        text = "**** **** **** 8850",
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 16.sp,
-                                        color = TextDarkPrimary,
-                                        modifier = Modifier.align(Alignment.CenterStart)
-                                    )
-                                    Text(
-                                        text = "VIP LEDGER",
-                                        fontSize = 11.sp,
-                                        fontFamily = FontFamily.Serif,
-                                        color = GoldAccent,
-                                        modifier = Modifier.align(Alignment.BottomEnd)
-                                    )
                                 }
                             }
                         }
                     }
 
                     "PLANS" -> {
-                        Column(modifier = Modifier.fillMaxWidth()) {
+                        item {
                             Text(
                                 text = "Active Savings Goals",
                                 fontFamily = FontFamily.Serif,
@@ -576,43 +583,46 @@ fun ExpenseTrackerApp(
                                 color = TextDarkPrimary,
                                 modifier = Modifier.padding(vertical = 12.dp)
                             )
-                            listOf(
-                                Pair("Kyoto Escapade", 4500.0),
-                                Pair("Hobby Mechanical KB", 350.0),
-                                Pair("Secure Emergency Liquidity", 10000.0)
-                            ).forEach { (planName, targetValue) ->
-                                Card(
+                        }
+
+                        items(listOf(
+                            Pair("Kyoto Escapade", 4500.0),
+                            Pair("Hobby Mechanical KB", 350.0),
+                            Pair("Secure Emergency Liquidity", 10000.0)
+                        )) { (planName, targetValue) ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 12.dp),
+                                shape = RoundedCornerShape(20.dp),
+                                border = BorderStroke(1.dp, Color(0xFF2D2D2D)),
+                                colors = CardDefaults.cardColors(containerColor = DarkSurface)
+                            ) {
+                                Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(bottom = 12.dp),
-                                    shape = RoundedCornerShape(20.dp),
-                                    border = BorderStroke(1.dp, Color(0xFF2D2D2D)),
-                                    colors = CardDefaults.cardColors(containerColor = DarkSurface)
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column {
-                                            Text(text = planName, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDarkPrimary)
-                                            Text(text = "Target: ${currencyFormatter.format(targetValue)}", fontSize = 12.sp, color = TextDarkSecondary)
-                                        }
-                                        Icon(
-                                            imageVector = Icons.Default.Star,
-                                            tint = GoldAccent,
-                                            contentDescription = "Starred goal"
-                                        )
+                                    Column {
+                                        Text(text = planName, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDarkPrimary)
+                                        Text(text = "Target: ${currencyFormatter.format(targetValue)}", fontSize = 12.sp, color = TextDarkSecondary)
                                     }
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        tint = GoldAccent,
+                                        contentDescription = "Starred goal"
+                                    )
                                 }
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(40.dp)) // padding to scroll past the bottom navigation bar cleanly
+                item {
+                    Spacer(modifier = Modifier.height(40.dp)) // padding to scroll past the bottom navigation bar cleanly
+                }
             }
 
             // Bottom Navigation Bar matching HTML: border-[#2D2D2D] bg-[#0F0F0F]
@@ -1294,7 +1304,12 @@ fun AddTransactionOverlay(
         }
     }
 
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+
     val handleDismiss = {
+        focusManager.clearFocus()
+        keyboardController?.hide()
         onDismiss()
     }
 
@@ -1545,6 +1560,8 @@ fun AddTransactionOverlay(
                     onClick = {
                         val amount = amountText.toDoubleOrNull() ?: 0.0
                         if (titleText.trim().isNotEmpty() && amount > 0.0) {
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
                             onSave(titleText.trim(), amount, selectedCategory, selectedType, noteText.trim())
                         }
                     },
