@@ -22,11 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -133,37 +136,123 @@ fun ExpenseTrackerApp(
             .fillMaxSize()
             .background(DarkBackground)
             .drawBehind {
-                // Glow 1: NeonPurple orb at top right
+                // Glow 1: Rich NeonPurple orb at top right
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color(0x2A8B5CF6), // NeonPurple with opacity
+                            Color(0x3B8B5CF6), // NeonPurple with opacity
                             Color.Transparent
                         ),
-                        center = Offset(size.width * 0.9f, size.height * 0.15f),
-                        radius = size.width * 0.75f
+                        center = Offset(size.width * 0.85f, size.height * 0.15f),
+                        radius = size.width * 0.85f
                     )
                 )
                 // Glow 2: GoldAccent orb at center left
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color(0x1ED4AF37), // GoldAccent with opacity
+                            Color(0x20D4AF37), // GoldAccent with opacity
                             Color.Transparent
                         ),
-                        center = Offset(size.width * 0.1f, size.height * 0.45f),
-                        radius = size.width * 0.75f
+                        center = Offset(size.width * 0.15f, size.height * 0.50f),
+                        radius = size.width * 0.8f
                     )
                 )
                 // Glow 3: EmeraldAccent orb at bottom right
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color(0x1E10B981), // EmeraldAccent with opacity
+                            Color(0x2410B981), // EmeraldAccent with opacity
                             Color.Transparent
                         ),
                         center = Offset(size.width * 0.85f, size.height * 0.85f),
-                        radius = size.width * 0.75f
+                        radius = size.width * 0.8f
+                    )
+                )
+                // Glow 4: Subtle Soft White orb near center top
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color(0x18FFFFFF),
+                            Color.Transparent
+                        ),
+                        center = Offset(size.width * 0.5f, size.height * 0.3f),
+                        radius = size.width * 0.6f
+                    )
+                )
+
+                // Cyber-blueprint Grid
+                val gridColor = Color(0x06FFFFFF)
+                val xGap = size.width / 12f
+                val yGap = size.height / 22f
+                for (i in 1..11) {
+                    val x = i * xGap
+                    drawLine(
+                        color = gridColor,
+                        start = Offset(x, 0f),
+                        end = Offset(x, size.height),
+                        strokeWidth = 1f
+                    )
+                }
+                for (i in 1..21) {
+                    val y = i * yGap
+                    drawLine(
+                        color = gridColor,
+                        start = Offset(0f, y),
+                        end = Offset(size.width, y),
+                        strokeWidth = 1f
+                    )
+                }
+
+                // Ribbon 1: Floating bezier cashflow pathway
+                val path1 = Path().apply {
+                    moveTo(0f, size.height * 0.38f)
+                    cubicTo(
+                        size.width * 0.3f, size.height * 0.22f,
+                        size.width * 0.68f, size.height * 0.58f,
+                        size.width, size.height * 0.34f
+                    )
+                }
+                drawPath(
+                    path = path1,
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0x008B5CF6),
+                            Color(0x138B5CF6),
+                            Color(0x22EE5555),
+                            Color(0x13D4AF37),
+                            Color(0x00D4AF37)
+                        )
+                    ),
+                    style = Stroke(
+                        width = 4.5f,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(45f, 15f), 0f)
+                    )
+                )
+
+                // Ribbon 2: Secondary organic flow pathway
+                val path2 = Path().apply {
+                    moveTo(0f, size.height * 0.43f)
+                    cubicTo(
+                        size.width * 0.33f, size.height * 0.63f,
+                        size.width * 0.63f, size.height * 0.18f,
+                        size.width, size.height * 0.48f
+                    )
+                }
+                drawPath(
+                    path = path2,
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0x0010B981),
+                            Color(0x1510B981),
+                            Color(0x2210B981),
+                            Color(0x138B5CF6),
+                            Color(0x008B5CF6)
+                        )
+                    ),
+                    style = Stroke(
+                        width = 3.5f,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(50f, 25f), 0f)
                     )
                 )
             }
@@ -1355,11 +1444,27 @@ fun AddTransactionOverlay(
         onDismiss()
     }
 
-    // Modal Sheet Overlay Custom UI Box
+    // Modal Sheet Overlay Custom UI Box (Frosted Glass Mask)
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.75f))
+            .background(Color(0xD8050508)) // Safe elegant dark glass tint
+            .drawBehind {
+                // High-fidelity micro-fiber frosted glass simulation lines with efficient spacing
+                val strokeWidth = 1f
+                val spacing = 140f
+                var offset = 0f
+                val limit = size.width + size.height
+                while (offset < limit) {
+                    drawLine(
+                        color = Color(0x0AFFFFFF), // ultra subtle premium refraction line
+                        start = Offset(offset, 0f),
+                        end = Offset(0f, offset),
+                        strokeWidth = strokeWidth
+                    )
+                    offset += spacing
+                }
+            }
             .clickable {
                 handleDismiss()
             }, // Dismiss when tapping outer mask
