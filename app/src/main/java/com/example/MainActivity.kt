@@ -46,6 +46,33 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
+fun Modifier.glassCard(
+    cornerRadius: androidx.compose.ui.unit.Dp = 24.dp,
+    borderWidth: androidx.compose.ui.unit.Dp = 1.dp,
+    tint: Color = Color.White,
+    alphaMultiplier: Float = 1.0f
+): Modifier = this
+    .background(
+        brush = Brush.verticalGradient(
+            colors = listOf(
+                Color(0x2E1E1E1E).copy(alpha = 0.28f * alphaMultiplier),
+                Color(0x1F0F0F0F).copy(alpha = 0.16f * alphaMultiplier)
+            )
+        ),
+        shape = RoundedCornerShape(cornerRadius)
+    )
+    .border(
+        width = borderWidth,
+        brush = Brush.verticalGradient(
+            colors = listOf(
+                tint.copy(alpha = 0.28f * alphaMultiplier),
+                Color.Transparent,
+                tint.copy(alpha = 0.08f * alphaMultiplier)
+            )
+        ),
+        shape = RoundedCornerShape(cornerRadius)
+    )
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,6 +132,41 @@ fun ExpenseTrackerApp(
         modifier = modifier
             .fillMaxSize()
             .background(DarkBackground)
+            .drawBehind {
+                // Glow 1: NeonPurple orb at top right
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color(0x2A8B5CF6), // NeonPurple with opacity
+                            Color.Transparent
+                        ),
+                        center = Offset(size.width * 0.9f, size.height * 0.15f),
+                        radius = size.width * 0.75f
+                    )
+                )
+                // Glow 2: GoldAccent orb at center left
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color(0x1ED4AF37), // GoldAccent with opacity
+                            Color.Transparent
+                        ),
+                        center = Offset(size.width * 0.1f, size.height * 0.45f),
+                        radius = size.width * 0.75f
+                    )
+                )
+                // Glow 3: EmeraldAccent orb at bottom right
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color(0x1E10B981), // EmeraldAccent with opacity
+                            Color.Transparent
+                        ),
+                        center = Offset(size.width * 0.85f, size.height * 0.85f),
+                        radius = size.width * 0.75f
+                    )
+                )
+            }
     ) {
         Column(
             modifier = Modifier
@@ -175,9 +237,10 @@ fun ExpenseTrackerApp(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 16.dp),
+                                .padding(bottom = 16.dp)
+                                .glassCard(cornerRadius = 16.dp, tint = GoldAccent),
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated)
+                            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                         ) {
                             Row(
                                 modifier = Modifier.padding(14.dp),
@@ -225,7 +288,7 @@ fun ExpenseTrackerApp(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Column 1: Add (Inverse Button style)
+                                // Column 1: Add (Translucent Glass Button style)
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -234,15 +297,15 @@ fun ExpenseTrackerApp(
                                     Box(
                                         modifier = Modifier
                                             .size(54.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .background(OffWhitePrimary)
+                                            .glassCard(cornerRadius = 16.dp, tint = OffWhitePrimary)
+                                            .background(OffWhitePrimary.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
                                             .clickable { showAddDialog = true },
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Add,
                                             contentDescription = "Log",
-                                            tint = Color(0xFF0F0F0F),
+                                            tint = OffWhitePrimary,
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
@@ -255,7 +318,7 @@ fun ExpenseTrackerApp(
                                     )
                                 }
 
-                                // Column 3: Insight Toggle Chart
+                                // Column 3: Insight Toggle Chart (Glassmorphic)
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -264,13 +327,8 @@ fun ExpenseTrackerApp(
                                     Box(
                                         modifier = Modifier
                                             .size(54.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .border(
-                                                width = 1.dp,
-                                                color = if (showInsightsSection) GoldAccent else Color(0xFF2D2D2D),
-                                                shape = RoundedCornerShape(16.dp)
-                                            )
-                                            .background(if (showInsightsSection) GoldAccent.copy(alpha = 0.1f) else Color.Transparent)
+                                            .glassCard(cornerRadius = 16.dp, tint = if (showInsightsSection) GoldAccent else Color.White)
+                                            .background(if (showInsightsSection) GoldAccent.copy(alpha = 0.12f) else Color.Transparent, RoundedCornerShape(16.dp))
                                             .clickable { showInsightsSection = !showInsightsSection },
                                         contentAlignment = Alignment.Center
                                     ) {
@@ -290,7 +348,7 @@ fun ExpenseTrackerApp(
                                     )
                                 }
 
-                                // Column 4: Reset DB or Limits toggler
+                                // Column 4: Reset DB or Limits toggler (Glassmorphic)
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -299,8 +357,7 @@ fun ExpenseTrackerApp(
                                     Box(
                                         modifier = Modifier
                                             .size(54.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .border(1.dp, Color(0xFF2D2D2D), RoundedCornerShape(16.dp))
+                                            .glassCard(cornerRadius = 16.dp, tint = Color.White)
                                             .clickable { showQuickSeedInfo = !showQuickSeedInfo },
                                         contentAlignment = Alignment.Center
                                     ) {
@@ -450,10 +507,11 @@ fun ExpenseTrackerApp(
                                 )
                                 Spacer(modifier = Modifier.height(20.dp))
                                 Card(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .glassCard(cornerRadius = 24.dp, tint = Color.White),
                                     shape = RoundedCornerShape(24.dp),
-                                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                                    border = BorderStroke(1.dp, Color(0xFF2D2D2D))
+                                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                                 ) {
                                     Column(modifier = Modifier.padding(18.dp)) {
                                         Text(
@@ -489,10 +547,19 @@ fun ExpenseTrackerApp(
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(200.dp),
+                                        .height(200.dp)
+                                        .glassCard(cornerRadius = 28.dp, tint = Color.White)
+                                        .background(
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(
+                                                    Color(0x22FFFFFF),
+                                                    Color(0x05FFFFFF)
+                                                )
+                                            ),
+                                            shape = RoundedCornerShape(28.dp)
+                                        ),
                                     shape = RoundedCornerShape(28.dp),
-                                    border = BorderStroke(1.dp, Color(0xFF2D2D2D)),
-                                    colors = CardDefaults.cardColors(containerColor = DarkSurface)
+                                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                                 ) {
                                     Box(
                                         modifier = Modifier
@@ -554,10 +621,10 @@ fun ExpenseTrackerApp(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(bottom = 12.dp),
+                                    .padding(bottom = 12.dp)
+                                    .glassCard(cornerRadius = 20.dp, tint = GoldAccent),
                                 shape = RoundedCornerShape(20.dp),
-                                border = BorderStroke(1.dp, Color(0xFF2D2D2D)),
-                                colors = CardDefaults.cardColors(containerColor = DarkSurface)
+                                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -582,16 +649,16 @@ fun ExpenseTrackerApp(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(40.dp)) // padding to scroll past the bottom navigation bar cleanly
+                    Spacer(modifier = Modifier.height(100.dp)) // dynamic padding to scroll completely past the floating navigation bar
                 }
             }
 
-            // Bottom Navigation Bar matching HTML: border-[#2D2D2D] bg-[#0F0F0F]
-            Surface(
+            // Bottom Navigation Bar with gorgeous Floating Glassmorphic design
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth(),
-                color = Color(0xFF0F0F0F),
-                border = BorderStroke(1.dp, Color(0xFF2D2D2D))
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    .glassCard(cornerRadius = 24.dp, tint = Color.White)
             ) {
                 Row(
                     modifier = Modifier
@@ -636,7 +703,7 @@ fun ExpenseTrackerApp(
             }
         }
 
-        // Floating Action Button
+        // Floating Action Button with Translucent Glass Style
         FloatingActionButton(
             onClick = { showAddDialog = true },
             modifier = Modifier
@@ -644,9 +711,10 @@ fun ExpenseTrackerApp(
                 .padding(24.dp)
                 .padding(bottom = 80.dp) // shift upwards to avoid colliding with bottom tab menu
                 .windowInsetsPadding(WindowInsets.navigationBars)
+                .glassCard(cornerRadius = 16.dp, tint = OffWhitePrimary)
                 .testTag("add_expense_fab"),
-            containerColor = OffWhitePrimary,
-            contentColor = Color(0xFF0F0F0F)
+            containerColor = OffWhitePrimary.copy(alpha = 0.2f),
+            contentColor = OffWhitePrimary
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
@@ -710,10 +778,10 @@ fun AestheticBalanceCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("balance_card"),
+            .testTag("balance_card")
+            .glassCard(cornerRadius = 32.dp, tint = Color.White),
         shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        border = BorderStroke(1.dp, Color(0xFF2D2D2D))
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Column(
             modifier = Modifier
@@ -761,7 +829,7 @@ fun AestheticBalanceCard(
             Row(
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(Color(0xFF2D2D2D))
+                    .glassCard(cornerRadius = 20.dp, borderWidth = 0.5.dp, tint = dotColor, alphaMultiplier = 0.6f)
                     .padding(horizontal = 14.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -845,9 +913,11 @@ fun AestheticAnalyticsCard(
     formatter: NumberFormat
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .glassCard(cornerRadius = 24.dp, tint = GoldAccent),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface)
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Column(
             modifier = Modifier.padding(18.dp)
@@ -999,45 +1069,51 @@ fun AestheticFilterSection(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // Aesthetic Search field
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = onSearchChange,
+        // Aesthetic Glass-wrapped Search field
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("search_field"),
-            placeholder = { Text("Search transactions...", color = TextDarkMuted, fontSize = 14.sp) },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = TextDarkSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
-            },
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { onSearchChange("") }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Clear",
-                            tint = TextDarkSecondary,
-                            modifier = Modifier.size(18.dp)
-                        )
+                .glassCard(cornerRadius = 14.dp, tint = Color.White)
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = onSearchChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("search_field"),
+                placeholder = { Text("Search transactions...", color = TextDarkMuted, fontSize = 14.sp) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = TextDarkSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { onSearchChange("") }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear",
+                                tint = TextDarkSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
-                }
-            },
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = DarkSurface,
-                unfocusedContainerColor = DarkSurface,
-                focusedBorderColor = MintPrimary.copy(alpha = 0.6f),
-                unfocusedBorderColor = DarkSurfaceElevated,
-                focusedTextColor = TextDarkPrimary,
-                unfocusedTextColor = TextDarkPrimary
-            ),
-            shape = RoundedCornerShape(14.dp)
-        )
+                },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedTextColor = TextDarkPrimary,
+                    unfocusedTextColor = TextDarkPrimary
+                ),
+                shape = RoundedCornerShape(14.dp)
+            )
+        }
 
         // Type filter rows
         Row(
@@ -1046,15 +1122,18 @@ fun AestheticFilterSection(
         ) {
             listOf("ALL" to "All", "EXPENSE" to "Expenses", "INCOME" to "Income").forEach { (id, label) ->
                 val isActive = selectedType == id
+                val activeBg = if (id == "EXPENSE") ExpenseRed else if (id == "INCOME") IncomeGreen else MintPrimary
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(if (isActive) MintPrimary else DarkSurface)
-                        .border(
-                            width = 1.dp,
-                            color = if (isActive) Color.Transparent else DarkSurfaceElevated,
-                            shape = RoundedCornerShape(10.dp)
+                        .then(
+                            if (isActive) {
+                                Modifier.background(activeBg.copy(alpha = 0.22f))
+                                    .border(1.5.dp, activeBg, RoundedCornerShape(10.dp))
+                            } else {
+                                Modifier.glassCard(cornerRadius = 10.dp, tint = Color.White, alphaMultiplier = 0.5f)
+                            }
                         )
                         .clickable { onTypeSelect(id) }
                         .padding(vertical = 8.dp),
@@ -1064,7 +1143,7 @@ fun AestheticFilterSection(
                         text = label,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isActive) Color(0xFF0C0F16) else TextDarkSecondary
+                        color = if (isActive) activeBg else TextDarkSecondary
                     )
                 }
             }
@@ -1103,14 +1182,15 @@ fun CategoryBadge(
 ) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (isActive) activeColor.copy(alpha = 0.15f) else DarkSurface)
-            .border(
-                width = 1.dp,
-                color = if (isActive) activeColor.copy(alpha = 0.7f) else DarkSurfaceElevated,
-                shape = RoundedCornerShape(20.dp)
-            )
             .clickable { onClick() }
+            .glassCard(cornerRadius = 20.dp, tint = if (isActive) activeColor else Color.White, alphaMultiplier = if (isActive) 1.2f else 0.4f)
+            .then(
+                if (isActive) {
+                    Modifier.background(activeColor.copy(alpha = 0.15f))
+                } else {
+                    Modifier
+                }
+            )
             .padding(horizontal = 14.dp, vertical = 6.dp)
     ) {
         Text(
@@ -1132,12 +1212,11 @@ fun TransactionItemRow(
     val category = remember(expense.category) { CategoryHelper.getCategory(expense.category) }
     val isExpense = expense.type == "EXPENSE"
 
+    val rowTint = if (isExpense) Color.White else GoldAccent
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(DarkSurface)
-            .border(1.dp, Color(0xFF2D2D2D), RoundedCornerShape(24.dp))
+            .glassCard(cornerRadius = 24.dp, tint = rowTint, alphaMultiplier = 0.7f)
             .padding(14.dp)
             .testTag("transaction_row_${expense.id}"),
         verticalAlignment = Alignment.CenterVertically
@@ -1284,12 +1363,12 @@ fun AddTransactionOverlay(
             }, // Dismiss when tapping outer mask
         contentAlignment = Alignment.BottomCenter
     ) {
-        // Inner card body
+        // Inner card body (Breathtaking glass bottom sheet)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                .background(DarkSurface)
+                .glassCard(cornerRadius = 28.dp, tint = Color.White, alphaMultiplier = 1.3f)
                 .clickable(enabled = false) {} // block click throughs
                 .windowInsetsPadding(WindowInsets.ime) // adjust for keyboard sliding
                 .navigationBarsPadding()
@@ -1304,7 +1383,7 @@ fun AddTransactionOverlay(
                     modifier = Modifier
                         .size(36.dp, 4.dp)
                         .clip(CircleShape)
-                        .background(DarkSurfaceElevated)
+                        .background(Color.White.copy(alpha = 0.2f))
                         .align(Alignment.CenterHorizontally)
                 )
 
@@ -1332,12 +1411,12 @@ fun AddTransactionOverlay(
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                // Dual Type segment selector
+                // Dual Type segment selector with neat layout border
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
-                        .background(DarkBackground)
+                        .glassCard(cornerRadius = 14.dp, tint = Color.White, alphaMultiplier = 0.6f)
                         .padding(4.dp)
                 ) {
                     listOf("EXPENSE" to "Expense", "INCOME" to "Income").forEach { (typeId, label) ->
@@ -1374,8 +1453,7 @@ fun AddTransactionOverlay(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(DarkBackground)
+                        .glassCard(cornerRadius = 16.dp, tint = Color.White, alphaMultiplier = 0.3f)
                         .padding(14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -1429,8 +1507,10 @@ fun AddTransactionOverlay(
                         .testTag("title_input"),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0x1F2A2A2A),
+                        unfocusedContainerColor = Color(0x0F1A1A1A),
                         focusedBorderColor = MintPrimary,
-                        unfocusedBorderColor = DarkSurfaceElevated,
+                        unfocusedBorderColor = Color(0x1F2D2D2D),
                         focusedTextColor = TextDarkPrimary,
                         unfocusedTextColor = TextDarkPrimary
                     ),
@@ -1449,8 +1529,10 @@ fun AddTransactionOverlay(
                         .testTag("note_input"),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0x1F2A2A2A),
+                        unfocusedContainerColor = Color(0x0F1A1A1A),
                         focusedBorderColor = MintPrimary,
-                        unfocusedBorderColor = DarkSurfaceElevated,
+                        unfocusedBorderColor = Color(0x1F2D2D2D),
                         focusedTextColor = TextDarkPrimary,
                         unfocusedTextColor = TextDarkPrimary
                     ),
@@ -1480,11 +1562,13 @@ fun AddTransactionOverlay(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(if (isSelected) category.color.copy(alpha = 0.15f) else DarkBackground)
-                                .border(
-                                    width = 1.dp,
-                                    color = if (isSelected) category.color else DarkSurfaceElevated,
-                                    shape = RoundedCornerShape(14.dp)
+                                .then(
+                                    if (isSelected) {
+                                        Modifier.background(category.color.copy(alpha = 0.18f))
+                                            .border(1.5.dp, category.color, RoundedCornerShape(14.dp))
+                                    } else {
+                                        Modifier.glassCard(cornerRadius = 14.dp, tint = Color.White, alphaMultiplier = 0.4f)
+                                    }
                                 )
                                 .clickable { selectedCategory = category.id }
                                 .padding(horizontal = 12.dp, vertical = 10.dp),
