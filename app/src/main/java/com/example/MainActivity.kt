@@ -1127,15 +1127,15 @@ fun AestheticFilterSection(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
+                        .clickable { onTypeSelect(id) }
                         .then(
                             if (isActive) {
-                                Modifier.background(activeBg.copy(alpha = 0.22f))
+                                Modifier.background(activeBg.copy(alpha = 0.22f), RoundedCornerShape(10.dp))
                                     .border(1.5.dp, activeBg, RoundedCornerShape(10.dp))
                             } else {
                                 Modifier.glassCard(cornerRadius = 10.dp, tint = Color.White, alphaMultiplier = 0.5f)
                             }
                         )
-                        .clickable { onTypeSelect(id) }
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -1180,17 +1180,19 @@ fun CategoryBadge(
     activeColor: Color = MintPrimary,
     onClick: () -> Unit
 ) {
+    val cornerShape = RoundedCornerShape(20.dp)
     Box(
         modifier = Modifier
+            .clip(cornerShape)
             .clickable { onClick() }
-            .glassCard(cornerRadius = 20.dp, tint = if (isActive) activeColor else Color.White, alphaMultiplier = if (isActive) 1.2f else 0.4f)
             .then(
                 if (isActive) {
-                    Modifier.background(activeColor.copy(alpha = 0.15f))
+                    Modifier.background(activeColor.copy(alpha = 0.15f), cornerShape)
                 } else {
                     Modifier
                 }
             )
+            .glassCard(cornerRadius = 20.dp, tint = if (isActive) activeColor else Color.White, alphaMultiplier = if (isActive) 1.2f else 0.4f)
             .padding(horizontal = 14.dp, vertical = 6.dp)
     ) {
         Text(
@@ -1427,13 +1429,16 @@ fun AddTransactionOverlay(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) activeTint.copy(alpha = 0.15f) else Color.Transparent)
+                                .clickable { selectedType = typeId }
+                                .background(
+                                    if (isSelected) activeTint.copy(alpha = 0.15f) else Color.Transparent,
+                                    RoundedCornerShape(10.dp)
+                                )
                                 .border(
                                     1.dp,
                                     if (isSelected) activeTint.copy(alpha = 0.4f) else Color.Transparent,
                                     RoundedCornerShape(10.dp)
                                 )
-                                .clickable { selectedType = typeId }
                                 .padding(vertical = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -1562,15 +1567,15 @@ fun AddTransactionOverlay(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(14.dp))
+                                .clickable { selectedCategory = category.id }
                                 .then(
                                     if (isSelected) {
-                                        Modifier.background(category.color.copy(alpha = 0.18f))
+                                        Modifier.background(category.color.copy(alpha = 0.18f), RoundedCornerShape(14.dp))
                                             .border(1.5.dp, category.color, RoundedCornerShape(14.dp))
                                     } else {
                                         Modifier.glassCard(cornerRadius = 14.dp, tint = Color.White, alphaMultiplier = 0.4f)
                                     }
                                 )
-                                .clickable { selectedCategory = category.id }
                                 .padding(horizontal = 12.dp, vertical = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {
