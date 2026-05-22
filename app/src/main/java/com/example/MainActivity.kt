@@ -28,8 +28,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -98,7 +96,7 @@ fun ExpenseTrackerApp(
 
     // Formatting Helpers
     val currencyFormatter = remember {
-        NumberFormat.getCurrencyInstance(Locale.US).apply {
+        NumberFormat.getCurrencyInstance(Locale("en", "IN")).apply {
             maximumFractionDigits = 2
         }
     }
@@ -765,7 +763,7 @@ fun AestheticBalanceCard(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "$",
+                    text = "₹",
                     fontSize = 26.sp,
                     fontFamily = FontFamily.Serif,
                     color = TextDarkPrimary.copy(alpha = 0.6f),
@@ -940,7 +938,7 @@ fun AestheticAnalyticsCard(
                                 String.format("%.0f", totalExpense)
                             }
                             Text(
-                                text = "$$kFormat",
+                                text = "₹$kFormat",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = TextDarkPrimary
@@ -1296,12 +1294,7 @@ fun AddTransactionOverlay(
         }
     }
 
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val focusManager = LocalFocusManager.current
-
     val handleDismiss = {
-        focusManager.clearFocus()
-        keyboardController?.hide()
         onDismiss()
     }
 
@@ -1418,7 +1411,7 @@ fun AddTransactionOverlay(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "$",
+                            text = "₹",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Black,
                             color = TextDarkPrimary
@@ -1552,8 +1545,6 @@ fun AddTransactionOverlay(
                     onClick = {
                         val amount = amountText.toDoubleOrNull() ?: 0.0
                         if (titleText.trim().isNotEmpty() && amount > 0.0) {
-                            focusManager.clearFocus()
-                            keyboardController?.hide()
                             onSave(titleText.trim(), amount, selectedCategory, selectedType, noteText.trim())
                         }
                     },

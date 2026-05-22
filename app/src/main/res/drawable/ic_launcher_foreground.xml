@@ -5,32 +5,103 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <path android:pathData="M54,54m-28,0a28,28 0,1 1,56 0a28,28 0,1 1,-56 0">
-        <aapt:attr name="android:fillColor">
+
+    <!-- Outer Circle -->
+    <path
+        android:strokeWidth="2.95"
+        android:strokeLineCap="round"
+        android:alpha="0.9"
+        android:pathData="M54,54m-31.64,0a31.64,31.64 0,1 1,63.28 0a31.64,31.64 0,1 1,-63.28 0">
+        <aapt:attr name="android:strokeColor">
             <gradient
-                android:centerX="54"
-                android:centerY="54"
-                android:gradientRadius="28"
-                android:type="radial">
-                <item android:color="#2610B981" android:offset="0.0" />
-                <item android:color="#0010B981" android:offset="1.0" />
+                android:startX="16.875"
+                android:startY="16.875"
+                android:endX="91.125"
+                android:endY="91.125"
+                android:type="linear">
+                <item android:color="#FFFFFF" android:offset="0.0" />
+                <item android:color="#8A8A8A" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Ledger Block Outer Frame -->
+    <path
+        android:strokeWidth="2.95"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="M40.078,35.859 C40.078,33.53 41.966,31.64 44.297,31.64 L63.703,31.64 C66.033,31.64 67.922,33.53 67.922,35.859 L67.922,72.14 C67.922,74.47 66.033,76.359 63.703,76.359 L44.297,76.359 C41.966,76.359 40.078,74.47 40.078,72.14 Z">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="16.875"
+                android:startY="16.875"
+                android:endX="91.125"
+                android:endY="91.125"
+                android:type="linear">
+                <item android:color="#FFFFFF" android:offset="0.0" />
+                <item android:color="#8A8A8A" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Ledger Content Lines -->
+    <path
+        android:strokeWidth="2.11"
+        android:strokeLineCap="round"
+        android:alpha="0.9"
+        android:pathData="M46.406,44.297 L61.594,44.297">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="16.875"
+                android:startY="16.875"
+                android:endX="91.125"
+                android:endY="91.125"
+                android:type="linear">
+                <item android:color="#FFFFFF" android:offset="0.0" />
+                <item android:color="#8A8A8A" android:offset="1.0" />
             </gradient>
         </aapt:attr>
     </path>
 
     <path
-        android:fillColor="#10B981"
-        android:pathData="M54,30 C40.75,30 30,40.75 30,54 C30,67.25 40.75,78 54,78 C67.25,78 78,67.25 78,54 C78,40.75 67.25,30 54,30 Z M54,74 C42.95,74 34,65.05 34,54 C34,42.95 42.95,34 54,34 C65.05,34 74,42.95 74,54 C74,65.05 65.05,74 54,74 Z" />
-
-    <path
-        android:strokeColor="#06B6D4"
-        android:strokeWidth="3.5"
+        android:strokeWidth="2.11"
         android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M38,62 L48,50 L58,56 L70,38" />
+        android:alpha="0.75"
+        android:pathData="M46.406,54.0 L58.219,54.0">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="16.875"
+                android:startY="16.875"
+                android:endX="91.125"
+                android:endY="91.125"
+                android:type="linear">
+                <item android:color="#FFFFFF" android:offset="0.0" />
+                <item android:color="#8A8A8A" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
     <path
-        android:fillColor="#06B6D4"
-        android:pathData="M70,38m-2.5,0a2.5,2.5 0,1 1,5 0a2.5,2.5 0,1 1,-5 0" />
+        android:strokeWidth="2.11"
+        android:strokeLineCap="round"
+        android:alpha="0.6"
+        android:pathData="M46.406,63.703 L54.844,63.703">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="16.875"
+                android:startY="16.875"
+                android:endX="91.125"
+                android:endY="91.125"
+                android:type="linear">
+                <item android:color="#FFFFFF" android:offset="0.0" />
+                <item android:color="#8A8A8A" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Tiny white circle dot -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M69.609,38.391m-2.531,0a2.531,2.531 0,1 1,5.062 0a2.531,2.531 0,1 1,-5.062 0" />
+
 </vector>

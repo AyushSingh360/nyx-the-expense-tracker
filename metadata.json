@@ -1,5 +1,5 @@
 {
-  "name": "Expense Tracker",
+  "name": "Nyx",
   "description": "An elegant, dark aesthetic expense tracker application designed for precision, effortless logging, and visual budgeting.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
