@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -1296,6 +1297,13 @@ fun AddTransactionOverlay(
     }
 
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
+    val handleDismiss = {
+        focusManager.clearFocus()
+        keyboardController?.hide()
+        onDismiss()
+    }
 
     // Modal Sheet Overlay Custom UI Box
     Box(
@@ -1303,8 +1311,7 @@ fun AddTransactionOverlay(
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.75f))
             .clickable {
-                keyboardController?.hide()
-                onDismiss()
+                handleDismiss()
             }, // Dismiss when tapping outer mask
         contentAlignment = Alignment.BottomCenter
     ) {
@@ -1345,7 +1352,7 @@ fun AddTransactionOverlay(
                         fontWeight = FontWeight.ExtraBold,
                         color = TextDarkPrimary
                     )
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = handleDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Cancel",
@@ -1545,6 +1552,8 @@ fun AddTransactionOverlay(
                     onClick = {
                         val amount = amountText.toDoubleOrNull() ?: 0.0
                         if (titleText.trim().isNotEmpty() && amount > 0.0) {
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
                             onSave(titleText.trim(), amount, selectedCategory, selectedType, noteText.trim())
                         }
                     },
