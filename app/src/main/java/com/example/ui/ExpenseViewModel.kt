@@ -10,15 +10,18 @@ class ExpenseViewModel(private val repository: ExpenseRepository) : ViewModel() 
 
     init {
         viewModelScope.launch {
-            repository.allExpenses.first().let { current ->
-                if (current.isEmpty()) {
-                    // Seed some beautiful transaction entries for visual aesthetic layout instantly!
-                    addExpense("Monthly Salary", 4500.00, "Salary", "INCOME", "Direct deposit", System.currentTimeMillis() - 86400000 * 4)
-                    addExpense("Tokyo Ramen Bar", 24.50, "Food", "EXPENSE", "Signature Tonkotsu ramen", System.currentTimeMillis() - 86400000 * 3)
-                    addExpense("Aesthetic Keycaps", 125.0, "Shopping", "EXPENSE", "Gradient dye-sub PBT", System.currentTimeMillis() - 86400000 * 2)
-                    addExpense("Netflix Premium", 15.99, "Entertainment", "EXPENSE", "Monthly ultra-HD stream", System.currentTimeMillis() - 86400000 * 1)
-                    addExpense("Cloud VM Server", 12.0, "Bills", "EXPENSE", "Personal hobby cluster", System.currentTimeMillis() - 3600000 * 3)
-                    addExpense("Commute Travel Card", 35.0, "Travel", "EXPENSE", "Metro reload", System.currentTimeMillis() - 3600000 * 1)
+            // Delete previously seeded dummy data gracefully block by block to wipe them completely
+            repository.allExpenses.first().forEach { expense ->
+                if (expense.title in listOf(
+                        "Monthly Salary",
+                        "Tokyo Ramen Bar",
+                        "Aesthetic Keycaps",
+                        "Netflix Premium",
+                        "Cloud VM Server",
+                        "Commute Travel Card",
+                        "Aesthetic Client Bonus"
+                    )) {
+                    repository.deleteById(expense.id)
                 }
             }
         }

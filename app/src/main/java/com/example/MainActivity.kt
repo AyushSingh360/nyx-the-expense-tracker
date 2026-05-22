@@ -255,45 +255,6 @@ fun ExpenseTrackerApp(
                                     )
                                 }
 
-                                // Column 2: Quick income seed trigger ("Transfer")
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(54.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .border(1.dp, Color(0xFF2D2D2D), RoundedCornerShape(16.dp))
-                                            .clickable {
-                                                // Quick seed realistic premium income to demonstrate state updates
-                                                viewModel.addExpense(
-                                                    title = "Aesthetic Client Bonus",
-                                                    amount = 950.0,
-                                                    category = "Salary",
-                                                    type = "INCOME",
-                                                    note = "Project milestone release bonus"
-                                                )
-                                            },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.TrendingUp,
-                                            contentDescription = "Income Quick Seed",
-                                            tint = TextDarkPrimary,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                    Text(
-                                        text = "In-Bonus",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextDarkSecondary.copy(alpha = 0.8f),
-                                        letterSpacing = 1.sp
-                                    )
-                                }
-
                                 // Column 3: Insight Toggle Chart
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
