@@ -16,6 +16,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -111,6 +113,21 @@ fun ExpenseTrackerApp(
 
     // Tab Navigation State Simulation
     var activeTab by remember { mutableStateOf("HOME") }
+    var calendarSelectedDate by remember {
+        mutableStateOf(
+            Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.time
+        )
+    }
+
+    val today = remember { Calendar.getInstance() }
+    var calendarCurrentYear by remember { mutableStateOf(today.get(Calendar.YEAR)) }
+    var calendarCurrentMonth by remember { mutableStateOf(today.get(Calendar.MONTH)) }
+    var calendarFilterByDayOnly by remember { mutableStateOf(true) }
 
     // State Collection
     val expenses by viewModel.filteredExpenses.collectAsStateWithLifecycle()
@@ -124,6 +141,29 @@ fun ExpenseTrackerApp(
 
     val balance = totalIncome - totalExpense
 
+    // Reactively compute daily list and display list in composable context, outer to any LazyListScope
+    val calendarDailyExpensesList = remember(calendarSelectedDate, expenses) {
+        val calSelected = Calendar.getInstance().apply { time = calendarSelectedDate }
+        val selYear = calSelected.get(Calendar.YEAR)
+        val selMonth = calSelected.get(Calendar.MONTH)
+        val selDay = calSelected.get(Calendar.DAY_OF_MONTH)
+        
+        val calExpense = Calendar.getInstance()
+        expenses.filter { expense ->
+            calExpense.timeInMillis = expense.timestamp
+            calExpense.get(Calendar.YEAR) == selYear &&
+            calExpense.get(Calendar.MONTH) == selMonth &&
+            calExpense.get(Calendar.DAY_OF_MONTH) == selDay
+        }
+    }
+    val calendarDisplayList = remember(calendarFilterByDayOnly, calendarDailyExpensesList, expenses) {
+        if (calendarFilterByDayOnly) {
+            calendarDailyExpensesList
+        } else {
+            expenses.take(100)
+        }
+    }
+
     // Formatting Helpers
     val currencyFormatter = remember {
         NumberFormat.getCurrencyInstance(Locale("en", "IN")).apply {
@@ -136,124 +176,149 @@ fun ExpenseTrackerApp(
             .fillMaxSize()
             .background(DarkBackground)
             .drawBehind {
-                // Glow 1: Rich NeonPurple orb at top right
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0x3B8B5CF6), // NeonPurple with opacity
-                            Color.Transparent
-                        ),
-                        center = Offset(size.width * 0.85f, size.height * 0.15f),
-                        radius = size.width * 0.85f
-                    )
-                )
-                // Glow 2: GoldAccent orb at center left
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0x20D4AF37), // GoldAccent with opacity
-                            Color.Transparent
-                        ),
-                        center = Offset(size.width * 0.15f, size.height * 0.50f),
-                        radius = size.width * 0.8f
-                    )
-                )
-                // Glow 3: EmeraldAccent orb at bottom right
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0x2410B981), // EmeraldAccent with opacity
-                            Color.Transparent
-                        ),
-                        center = Offset(size.width * 0.85f, size.height * 0.85f),
-                        radius = size.width * 0.8f
-                    )
-                )
-                // Glow 4: Subtle Soft White orb near center top
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0x18FFFFFF),
-                            Color.Transparent
-                        ),
-                        center = Offset(size.width * 0.5f, size.height * 0.3f),
-                        radius = size.width * 0.6f
-                    )
-                )
+                // Base background black
+                drawRect(color = Color(0xFF030101))
 
-                // Cyber-blueprint Grid
-                val gridColor = Color(0x06FFFFFF)
-                val xGap = size.width / 12f
-                val yGap = size.height / 22f
-                for (i in 1..11) {
-                    val x = i * xGap
-                    drawLine(
-                        color = gridColor,
-                        start = Offset(x, 0f),
-                        end = Offset(x, size.height),
-                        strokeWidth = 1f
-                    )
-                }
-                for (i in 1..21) {
-                    val y = i * yGap
-                    drawLine(
-                        color = gridColor,
-                        start = Offset(0f, y),
-                        end = Offset(size.width, y),
-                        strokeWidth = 1f
-                    )
-                }
+                val w = size.width
+                val h = size.height
 
-                // Ribbon 1: Floating bezier cashflow pathway
-                val path1 = Path().apply {
-                    moveTo(0f, size.height * 0.38f)
-                    cubicTo(
-                        size.width * 0.3f, size.height * 0.22f,
-                        size.width * 0.68f, size.height * 0.58f,
-                        size.width, size.height * 0.34f
-                    )
-                }
-                drawPath(
-                    path = path1,
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color(0x008B5CF6),
-                            Color(0x138B5CF6),
-                            Color(0x22EE5555),
-                            Color(0x13D4AF37),
-                            Color(0x00D4AF37)
-                        )
+                // Draw background ambient blue/cyan backlights (Behind certain curves for color temperature contrast)
+                // Ambient aura 1: middle-right serpentine curve aura
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color(0x2E12354F), Color(0x000F1F2F)),
+                        center = Offset(w * 0.85f, h * 0.50f),
+                        radius = w * 0.7f
                     ),
-                    style = Stroke(
-                        width = 4.5f,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(45f, 15f), 0f)
+                    center = Offset(w * 0.85f, h * 0.50f),
+                    radius = w * 0.7f
+                )
+                
+                // Ambient aura 2: bottom curve aura
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color(0x281C3040), Color(0x000A131C)),
+                        center = Offset(w * 0.20f, h * 0.88f),
+                        radius = w * 0.8f
+                    ),
+                    center = Offset(w * 0.20f, h * 0.88f),
+                    radius = w * 0.8f
+                )
+
+                // 1. Serpentine/modular glowing track path matching layout exactly
+                val conduitPath = Path().apply {
+                    // Top horizontal/loop
+                    moveTo(w * 0.12f, h * 0.08f)
+                    cubicTo(w * 0.12f, h * 0.03f, w * 0.25f, h * 0.015f, w * 0.50f, h * 0.015f)
+                    lineTo(w * 0.80f, h * 0.015f)
+                    cubicTo(w * 0.94f, h * 0.015f, w * 0.94f, h * 0.08f, w * 0.94f, h * 0.08f)
+                    lineTo(w * 0.94f, h * 0.12f)
+                    
+                    // Top inner partition back left
+                    cubicTo(w * 0.94f, h * 0.18f, w * 0.78f, h * 0.18f, w * 0.50f, h * 0.18f)
+                    lineTo(w * 0.20f, h * 0.18f)
+                    
+                    // Smooth transition back right
+                    cubicTo(w * 0.06f, h * 0.18f, w * 0.06f, h * 0.28f, w * 0.20f, h * 0.28f)
+                    lineTo(w * 0.80f, h * 0.28f)
+                    
+                    // Right loop down to middle
+                    cubicTo(w * 0.94f, h * 0.28f, w * 0.94f, h * 0.35f, w * 0.94f, h * 0.38f)
+                    
+                    // The S curve sequence in middle-right
+                    cubicTo(w * 0.94f, h * 0.42f, w * 0.82f, h * 0.45f, w * 0.72f, h * 0.48f)
+                    cubicTo(w * 0.62f, h * 0.51f, w * 0.62f, h * 0.56f, w * 0.72f, h * 0.59f)
+                    cubicTo(w * 0.82f, h * 0.62f, w * 0.94f, h * 0.65f, w * 0.94f, h * 0.68f)
+                    lineTo(w * 0.94f, h * 0.74f)
+                    
+                    // Bottom loop capsule going back left
+                    cubicTo(w * 0.94f, h * 0.82f, w * 0.78f, h * 0.82f, w * 0.50f, h * 0.82f)
+                    lineTo(w * 0.20f, h * 0.82f)
+                    
+                    // Smooth transition to bottom-most horizontal tracking edge
+                    cubicTo(w * 0.06f, h * 0.82f, w * 0.06f, h * 0.94f, w * 0.20f, h * 0.94f)
+                    lineTo(w * 0.80f, h * 0.94f)
+                }
+
+                // 2. Left vertical dividing branch
+                val divisionPath = Path().apply {
+                    moveTo(w * 0.12f, h * 0.34f)
+                    lineTo(w * 0.12f, h * 0.75f)
+                }
+
+                // 3. Screen Enclosing Oval/Rounded Border Outer frame
+                val borderPath = Path().apply {
+                    val rx = w * 0.04f
+                    val ry = h * 0.02f
+                    addRoundRect(
+                        androidx.compose.ui.geometry.RoundRect(
+                            rect = androidx.compose.ui.geometry.Rect(rx, ry, w - rx, h - ry),
+                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.08f)
+                        )
+                    )
+                }
+
+                // Styles
+                val orangeGlowBrush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0x1AEE5A1B),
+                        Color(0x30CD7F32),
+                        Color(0x15FF7F3F)
                     )
                 )
 
-                // Ribbon 2: Secondary organic flow pathway
-                val path2 = Path().apply {
-                    moveTo(0f, size.height * 0.43f)
-                    cubicTo(
-                        size.width * 0.33f, size.height * 0.63f,
-                        size.width * 0.63f, size.height * 0.18f,
-                        size.width, size.height * 0.48f
+                val copperBrush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF4A1E10), // Obsidian copper core dark shadow
+                        Color(0xFFCD6F3E), // Lustrous warm copper highlight
+                        Color(0xFFFFAD79), // Highly luminous specular gradient
+                        Color(0xFF8B3A1A)  // Dark bronze rust transition
                     )
-                }
-                drawPath(
-                    path = path2,
+                )
+
+                val rimGlintBrush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFFFDFB0),
+                        Color(0xFFFFF6ED),
+                        Color(0xFFFFEAD9)
+                    )
+                )
+
+                // Define multiple strokes for photorealistic layering
+                val wideGlowStroke = Stroke(width = w * 0.09f, cap = StrokeCap.Round)
+                val coreRidgeStroke = Stroke(width = w * 0.048f, cap = StrokeCap.Round)
+                val darkValleyStroke = Stroke(width = w * 0.034f, cap = StrokeCap.Round)
+                val specularStroke = Stroke(width = w * 0.005f, cap = StrokeCap.Round)
+
+                // Render multi-layered 3D pipeline
+                // Layer 1: Diffuse soft warm light shadows
+                drawPath(path = borderPath, brush = orangeGlowBrush, style = wideGlowStroke)
+                drawPath(path = conduitPath, brush = orangeGlowBrush, style = wideGlowStroke)
+                drawPath(path = divisionPath, brush = orangeGlowBrush, style = wideGlowStroke)
+
+                // Layer 2: Glossy metallic gold/copper borders
+                drawPath(path = borderPath, brush = copperBrush, style = coreRidgeStroke)
+                drawPath(path = conduitPath, brush = copperBrush, style = coreRidgeStroke)
+                drawPath(path = divisionPath, brush = copperBrush, style = coreRidgeStroke)
+
+                // Layer 3: High-contrast Dark Valley masks
+                val valleyBlack = Color(0xFF030101)
+                drawPath(path = borderPath, color = valleyBlack, style = darkValleyStroke)
+                drawPath(path = conduitPath, color = valleyBlack, style = darkValleyStroke)
+                drawPath(path = divisionPath, color = valleyBlack, style = darkValleyStroke)
+
+                // Layer 4: Extremely sharp crisp Specular Rim highlight
+                drawPath(path = borderPath, brush = rimGlintBrush, style = specularStroke)
+                drawPath(path = conduitPath, brush = rimGlintBrush, style = specularStroke)
+                drawPath(path = divisionPath, brush = rimGlintBrush, style = specularStroke)
+
+                // Layer 5: Extremely bright glow flare at the bottom track line
+                drawRect(
                     brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color(0x0010B981),
-                            Color(0x1510B981),
-                            Color(0x2210B981),
-                            Color(0x138B5CF6),
-                            Color(0x008B5CF6)
-                        )
+                        colors = listOf(Color(0x00FF8C00), Color(0xFFFFF2D5), Color(0xFFFF5F1F), Color(0x00FF5F1F))
                     ),
-                    style = Stroke(
-                        width = 3.5f,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(50f, 25f), 0f)
-                    )
+                    topLeft = Offset(w * 0.15f, h * 0.935f),
+                    size = androidx.compose.ui.geometry.Size(w * 0.7f, w * 0.015f)
                 )
             }
     ) {
@@ -579,6 +644,136 @@ fun ExpenseTrackerApp(
                         }
                     }
 
+                    "CALENDAR" -> {
+                        // 1. Calendar header & month selection controls
+                        item {
+                            CalendarHeaderSection(
+                                currentYear = calendarCurrentYear,
+                                currentMonth = calendarCurrentMonth,
+                                onPreviousMonth = {
+                                    if (calendarCurrentMonth == 0) {
+                                        calendarCurrentMonth = 11
+                                        calendarCurrentYear -= 1
+                                    } else {
+                                        calendarCurrentMonth -= 1
+                                    }
+                                },
+                                onNextMonth = {
+                                    if (calendarCurrentMonth == 11) {
+                                        calendarCurrentMonth = 0
+                                        calendarCurrentYear += 1
+                                    } else {
+                                        calendarCurrentMonth += 1
+                                    }
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(18.dp))
+                        }
+
+                        // 2. Interactive grid showing the days of the month with dynamic indicator highlights
+                        item {
+                            val daysInMonth = remember(calendarCurrentYear, calendarCurrentMonth) {
+                                getDaysInMonth(calendarCurrentYear, calendarCurrentMonth)
+                            }
+                            
+                            // High performance O(1) monthly transactions lookup Map
+                            val monthExpensesInfo = remember(calendarCurrentYear, calendarCurrentMonth, expenses) {
+                                val infoMap = mutableMapOf<Int, Pair<Boolean, Boolean>>()
+                                val cal = java.util.Calendar.getInstance()
+                                expenses.forEach { expense ->
+                                    cal.timeInMillis = expense.timestamp
+                                    val expYear = cal.get(java.util.Calendar.YEAR)
+                                    val expMonth = cal.get(java.util.Calendar.MONTH)
+                                    if (expYear == calendarCurrentYear && expMonth == calendarCurrentMonth) {
+                                        val expDay = cal.get(java.util.Calendar.DAY_OF_MONTH)
+                                        val isIncome = expense.type == "INCOME"
+                                        val isExpense = expense.type == "EXPENSE"
+                                        val current = infoMap[expDay] ?: Pair(false, false)
+                                        infoMap[expDay] = Pair(
+                                            current.first || isIncome,
+                                            current.second || isExpense
+                                        )
+                                    }
+                                }
+                                infoMap
+                            }
+
+                            CalendarGridCard(
+                                currentYear = calendarCurrentYear,
+                                currentMonth = calendarCurrentMonth,
+                                daysInMonth = daysInMonth,
+                                monthExpensesInfo = monthExpensesInfo,
+                                selectedDate = calendarSelectedDate,
+                                onSelectDate = { calendarSelectedDate = it }
+                            )
+                            Spacer(modifier = Modifier.height(18.dp))
+                        }
+
+                        // 3. Chosen Day Stats breakdown Card
+                        item {
+                            val selectedDateStr = remember(calendarSelectedDate) {
+                                java.text.SimpleDateFormat("MMMM d, yyyy", java.util.Locale.US).format(calendarSelectedDate)
+                            }
+                            
+                            val dailyExpensesList = remember(calendarSelectedDate, expenses) {
+                                val calSelected = java.util.Calendar.getInstance().apply { time = calendarSelectedDate }
+                                val selYear = calSelected.get(java.util.Calendar.YEAR)
+                                val selMonth = calSelected.get(java.util.Calendar.MONTH)
+                                val selDay = calSelected.get(java.util.Calendar.DAY_OF_MONTH)
+                                
+                                val calExpense = java.util.Calendar.getInstance()
+                                expenses.filter { expense ->
+                                    calExpense.timeInMillis = expense.timestamp
+                                    calExpense.get(java.util.Calendar.YEAR) == selYear &&
+                                    calExpense.get(java.util.Calendar.MONTH) == selMonth &&
+                                    calExpense.get(java.util.Calendar.DAY_OF_MONTH) == selDay
+                                }
+                            }
+                            val dailyExpenseTotal = remember(dailyExpensesList) {
+                                dailyExpensesList.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+                            }
+                            val dailyIncomeTotal = remember(dailyExpensesList) {
+                                dailyExpensesList.filter { it.type == "INCOME" }.sumOf { it.amount }
+                            }
+                            val dailyNet = dailyIncomeTotal - dailyExpenseTotal
+
+                            CalendarDailyStatsCard(
+                                selectedDateStr = selectedDateStr,
+                                dailyExpenseTotal = dailyExpenseTotal,
+                                dailyIncomeTotal = dailyIncomeTotal,
+                                dailyNet = dailyNet,
+                                expenseCount = dailyExpensesList.filter { it.type == "EXPENSE" }.size,
+                                incomeCount = dailyExpensesList.filter { it.type == "INCOME" }.size,
+                                formatter = currencyFormatter
+                            )
+                            Spacer(modifier = Modifier.height(18.dp))
+                        }
+
+                        // 4. List Label with toggle controls
+                        item {
+                            CalendarListHeader(
+                                filterByDayOnly = calendarFilterByDayOnly,
+                                onToggleFilter = { calendarFilterByDayOnly = !calendarFilterByDayOnly }
+                            )
+                        }
+
+                        // 5. Sequential Transaction cells using highly performant items() lazy recycling mechanics
+                        if (calendarDisplayList.isEmpty()) {
+                            item {
+                                CalendarEmptyStateBox(filterByDayOnly = calendarFilterByDayOnly)
+                            }
+                        } else {
+                            items(calendarDisplayList, key = { "calendar_${it.id}" }) { expense ->
+                                TransactionItemRow(
+                                    expense = expense,
+                                    formatter = currencyFormatter,
+                                    onDelete = { viewModel.deleteExpense(expense.id) }
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+                    }
+
                     "STATS" -> {
                         item {
                             Column(modifier = Modifier.fillMaxWidth()) {
@@ -765,6 +960,14 @@ fun ExpenseTrackerApp(
                         onClick = { activeTab = "HOME" }
                     )
 
+                    // Calendar Tab
+                    BottomNavItem(
+                        icon = Icons.Default.DateRange,
+                        label = "CALENDAR",
+                        isActive = activeTab == "CALENDAR",
+                        onClick = { activeTab = "CALENDAR" }
+                    )
+
                     // Stats Tab
                     BottomNavItem(
                         icon = Icons.Default.BarChart,
@@ -815,9 +1018,10 @@ fun ExpenseTrackerApp(
         // Animated Dialog Box (Bottom Sheet Overlay style)
         if (showAddDialog) {
             AddTransactionOverlay(
+                defaultDate = calendarSelectedDate,
                 onDismiss = { showAddDialog = false },
-                onSave = { title, amount, category, type, note ->
-                    viewModel.addExpense(title, amount, category, type, note)
+                onSave = { title, amount, category, type, note, timestamp ->
+                    viewModel.addExpense(title, amount, category, type, note, timestamp)
                     showAddDialog = false
                 }
             )
@@ -1407,8 +1611,9 @@ fun TransactionItemRow(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AddTransactionOverlay(
+    defaultDate: java.util.Date = java.util.Date(),
     onDismiss: () -> Unit,
-    onSave: (String, Double, String, String, String) -> Unit
+    onSave: (String, Double, String, String, String, Long) -> Unit
 ) {
     // Input parameters
     var amountText by remember { mutableStateOf("") }
@@ -1711,13 +1916,52 @@ fun AddTransactionOverlay(
                 // Save button
                 val saveButtonEnabled = titleText.trim().isNotEmpty() && (amountText.toDoubleOrNull() ?: 0.0) > 0.0
 
+                // Selected Date display row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .glassCard(cornerRadius = 14.dp, tint = Color.White)
+                        .background(Color(0x11FFFFFF), RoundedCornerShape(14.dp))
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Date",
+                            tint = GoldAccent,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Ledger Date",
+                            fontSize = 12.sp,
+                            color = TextDarkSecondary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    val formattedDate = remember(defaultDate) {
+                        val sdf = java.text.SimpleDateFormat("MMMM d, yyyy", java.util.Locale.US)
+                        sdf.format(defaultDate)
+                    }
+                    Text(
+                        text = formattedDate,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextDarkPrimary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
                 Button(
                     onClick = {
                         val amount = amountText.toDoubleOrNull() ?: 0.0
                         if (titleText.trim().isNotEmpty() && amount > 0.0) {
                             focusManager.clearFocus()
                             keyboardController?.hide()
-                            onSave(titleText.trim(), amount, selectedCategory, selectedType, noteText.trim())
+                            onSave(titleText.trim(), amount, selectedCategory, selectedType, noteText.trim(), defaultDate.time)
                         }
                     },
                     modifier = Modifier
@@ -1742,4 +1986,430 @@ fun AddTransactionOverlay(
             }
         }
     }
+}
+
+@Composable
+fun CalendarHeaderSection(
+    currentYear: Int,
+    currentMonth: Int,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit
+) {
+    val monthName = remember(currentMonth) {
+        val cal = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.MONTH, currentMonth)
+        }
+        java.text.SimpleDateFormat("MMMM", java.util.Locale.US).format(cal.time)
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Calendar Ledger",
+            fontFamily = FontFamily.Serif,
+            fontSize = 22.sp,
+            color = TextDarkPrimary
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            IconButton(
+                onClick = onPreviousMonth,
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF1E1E1E))
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Previous Month",
+                    tint = TextDarkPrimary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+
+            Text(
+                text = "$monthName $currentYear",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextDarkPrimary,
+                modifier = Modifier.widthIn(min = 90.dp),
+                textAlign = TextAlign.Center
+            )
+
+            IconButton(
+                onClick = onNextMonth,
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF1E1E1E))
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Next Month",
+                    tint = TextDarkPrimary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CalendarGridCard(
+    currentYear: Int,
+    currentMonth: Int,
+    daysInMonth: List<Int?>,
+    monthExpensesInfo: Map<Int, Pair<Boolean, Boolean>>,
+    selectedDate: java.util.Date,
+    onSelectDate: (java.util.Date) -> Unit
+) {
+    val selectedCal = remember(selectedDate) {
+        java.util.Calendar.getInstance().apply { time = selectedDate }
+    }
+    val sYear = selectedCal.get(java.util.Calendar.YEAR)
+    val sMonth = selectedCal.get(java.util.Calendar.MONTH)
+    val sDay = selectedCal.get(java.util.Calendar.DAY_OF_MONTH)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .glassCard(cornerRadius = 24.dp, tint = Color.White),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Weekday headings
+            Row(modifier = Modifier.fillMaxWidth()) {
+                val daysOfWeek = listOf("S", "M", "T", "W", "T", "F", "S")
+                daysOfWeek.forEach { dayLetter ->
+                    Text(
+                        text = dayLetter,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextDarkSecondary.copy(alpha = 0.5f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val totalCells = daysInMonth.size
+            var cellIndex = 0
+            while (cellIndex < totalCells) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    for (col in 0..6) {
+                        if (cellIndex < totalCells) {
+                            val day = daysInMonth[cellIndex]
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1.2f)
+                                    .padding(2.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (day != null) {
+                                    val isSelected = currentYear == sYear && currentMonth == sMonth && day == sDay
+                                    val dayInfo = monthExpensesInfo[day]
+                                    val hasIncome = dayInfo?.first == true
+                                    val hasExpense = dayInfo?.second == true
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape)
+                                            .clickable {
+                                                val newDate = java.util.Calendar.getInstance().apply {
+                                                    set(java.util.Calendar.YEAR, currentYear)
+                                                    set(java.util.Calendar.MONTH, currentMonth)
+                                                    set(java.util.Calendar.DAY_OF_MONTH, day)
+                                                    set(java.util.Calendar.HOUR_OF_DAY, 0)
+                                                    set(java.util.Calendar.MINUTE, 0)
+                                                    set(java.util.Calendar.SECOND, 0)
+                                                    set(java.util.Calendar.MILLISECOND, 0)
+                                                }.time
+                                                onSelectDate(newDate)
+                                            }
+                                            .then(
+                                                if (isSelected) Modifier.background(GoldAccent) else Modifier
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = day.toString(),
+                                                fontSize = 12.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isSelected) Color.Black else TextDarkPrimary
+                                            )
+
+                                            if (!isSelected && (hasIncome || hasExpense)) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.padding(top = 1.dp)
+                                                ) {
+                                                    if (hasIncome) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(4.dp)
+                                                                .clip(CircleShape)
+                                                                .background(EmeraldAccent)
+                                                        )
+                                                    }
+                                                    if (hasExpense) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(4.dp)
+                                                                .clip(CircleShape)
+                                                                .background(RedAccent)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            cellIndex++
+                        } else {
+                            Box(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun CalendarDailyStatsCard(
+    selectedDateStr: String,
+    dailyExpenseTotal: Double,
+    dailyIncomeTotal: Double,
+    dailyNet: Double,
+    expenseCount: Int,
+    incomeCount: Int,
+    formatter: java.text.NumberFormat
+) {
+    Text(
+        text = "Daily Tracker • $selectedDateStr",
+        fontSize = 15.sp,
+        fontFamily = FontFamily.Serif,
+        color = TextDarkSecondary,
+        modifier = Modifier.padding(bottom = 8.dp)
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .glassCard(cornerRadius = 24.dp, tint = Color.White),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "DAILY SPENT",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextDarkSecondary.copy(alpha = 0.5f),
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = formatter.format(dailyExpenseTotal),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (dailyExpenseTotal > 0) RedAccent else TextDarkPrimary
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(30.dp)
+                        .background(Color(0xFF2D2D2D))
+                )
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "DAILY INCOME",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextDarkSecondary.copy(alpha = 0.5f),
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = formatter.format(dailyIncomeTotal),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (dailyIncomeTotal > 0) EmeraldAccent else TextDarkPrimary
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(30.dp)
+                        .background(Color(0xFF2D2D2D))
+                )
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "NET BAL",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextDarkSecondary.copy(alpha = 0.5f),
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = (if (dailyNet >= 0) "+" else "") + formatter.format(dailyNet),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (dailyNet >= 0) EmeraldAccent else RedAccent
+                    )
+                }
+            }
+
+            if (expenseCount > 0 || incomeCount > 0) {
+                Spacer(modifier = Modifier.height(14.dp))
+                HorizontalDivider(color = Color(0xFF2D2D2D), thickness = 0.5.dp)
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "Registered $expenseCount expenses and $incomeCount income records on this day.",
+                    fontSize = 11.sp,
+                    color = TextDarkSecondary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CalendarListHeader(
+    filterByDayOnly: Boolean,
+    onToggleFilter: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = if (filterByDayOnly) "Selected Date Records" else "All Past Expenses",
+            fontSize = 16.sp,
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.Normal,
+            color = TextDarkPrimary
+        )
+
+        Text(
+            text = if (filterByDayOnly) "SHOW PAST HISTORY" else "SHOW SELECTED DATE ONLY",
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = GoldAccent,
+            letterSpacing = 0.5.sp,
+            modifier = Modifier
+                .clickable { onToggleFilter() }
+                .padding(vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
+fun CalendarEmptyStateBox(filterByDayOnly: Boolean) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(130.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color(0xFF131313))
+            .border(1.dp, Color(0xFF2D2D2D), RoundedCornerShape(20.dp))
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Default.Inbox,
+                contentDescription = "Empty list",
+                tint = TextDarkMuted,
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = if (filterByDayOnly) "No transaction on this date" else "No overall history recorded",
+                color = TextDarkSecondary,
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+// Helpers for Calendar:
+fun getDaysInMonth(year: Int, month: Int): List<Int?> {
+    val cal = java.util.Calendar.getInstance()
+    cal.clear()
+    cal.set(java.util.Calendar.YEAR, year)
+    cal.set(java.util.Calendar.MONTH, month)
+    cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+
+    val maxDays = cal.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
+    val firstDayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK)
+    
+    // Offset Sunday (1 in java.util.Calendar) to align grid
+    val offset = firstDayOfWeek - java.util.Calendar.SUNDAY
+
+    val days = mutableListOf<Int?>()
+    for (i in 0 until offset) {
+        days.add(null)
+    }
+
+    for (day in 1..maxDays) {
+        days.add(day)
+    }
+    return days
+}
+
+fun isSameDayDate(date1: java.util.Date, date2: java.util.Date): Boolean {
+    val cal1 = java.util.Calendar.getInstance().apply { time = date1 }
+    val cal2 = java.util.Calendar.getInstance().apply { time = date2 }
+    return cal1.get(java.util.Calendar.YEAR) == cal2.get(java.util.Calendar.YEAR) &&
+           cal1.get(java.util.Calendar.MONTH) == cal2.get(java.util.Calendar.MONTH) &&
+           cal1.get(java.util.Calendar.DAY_OF_MONTH) == cal2.get(java.util.Calendar.DAY_OF_MONTH)
+}
+
+fun isSameDay(timestamp: Long, date: java.util.Date): Boolean {
+    val cal1 = java.util.Calendar.getInstance().apply { timeInMillis = timestamp }
+    val cal2 = java.util.Calendar.getInstance().apply { time = date }
+    return cal1.get(java.util.Calendar.YEAR) == cal2.get(java.util.Calendar.YEAR) &&
+           cal1.get(java.util.Calendar.MONTH) == cal2.get(java.util.Calendar.MONTH) &&
+           cal1.get(java.util.Calendar.DAY_OF_MONTH) == cal2.get(java.util.Calendar.DAY_OF_MONTH)
 }
