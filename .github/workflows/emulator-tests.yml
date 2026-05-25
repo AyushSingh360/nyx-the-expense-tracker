@@ -23,10 +23,6 @@ jobs:
       - name: Create .env for Secrets plugin
         run: echo "GEMINI_API_KEY=ci_placeholder" > .env
 
-      - name: Install required SDK platforms
-        run: |
-          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-36" || true
-
       - name: Run instrumented tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -35,4 +31,4 @@ jobs:
           arch: x86_64
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
-          script: gradle connectedDebugAndroidTest
+          script: ./gradlew connectedDebugAndroidTest
