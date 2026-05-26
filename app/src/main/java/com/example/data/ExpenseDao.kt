@@ -22,4 +22,13 @@ interface ExpenseDao {
 
     @Query("SELECT SUM(amount) FROM expenses WHERE type = 'EXPENSE'")
     fun getTotalExpenseFlow(): Flow<Double?>
+
+    @Query("SELECT * FROM plans ORDER BY id DESC")
+    fun getAllPlans(): Flow<List<Plan>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPlan(plan: Plan)
+
+    @Query("DELETE FROM plans WHERE id = :id")
+    suspend fun deletePlanById(id: Int)
 }

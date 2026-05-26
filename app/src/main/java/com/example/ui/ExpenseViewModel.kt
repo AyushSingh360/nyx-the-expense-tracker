@@ -24,6 +24,13 @@ class ExpenseViewModel(private val repository: ExpenseRepository) : ViewModel() 
                     repository.deleteById(expense.id)
                 }
             }
+            // Seed plans if they are empty
+            val currentPlans = repository.allPlans.first()
+            if (currentPlans.isEmpty()) {
+                repository.insertPlan(Plan(name = "Kyoto Escapade", targetAmount = 4500.0))
+                repository.insertPlan(Plan(name = "Hobby Mechanical KB", targetAmount = 350.0))
+                repository.insertPlan(Plan(name = "Secure Emergency Liquidity", targetAmount = 10000.0))
+            }
         }
     }
 
@@ -41,6 +48,11 @@ class ExpenseViewModel(private val repository: ExpenseRepository) : ViewModel() 
     val allExpenses = repository.allExpenses
     val totalIncome = repository.totalIncome.map { it ?: 0.0 }
     val totalExpense = repository.totalExpense.map { it ?: 0.0 }
+    val allPlans = repository.allPlans.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     // Filtered list flow
     val filteredExpenses = combine(
@@ -55,7 +67,9 @@ class ExpenseViewModel(private val repository: ExpenseRepository) : ViewModel() 
             val matchesQuery = query.isEmpty() || expense.title.contains(query, ignoreCase = true) || expense.note.contains(query, ignoreCase = true)
             matchesType && matchesCategory && matchesQuery
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }
+    .flowOn(kotlinx.coroutines.Dispatchers.Default)
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Category distribution flow for expenses (percent spent)
     val categoryDistribution = allExpenses.map { expenses ->
@@ -69,7 +83,9 @@ class ExpenseViewModel(private val repository: ExpenseRepository) : ViewModel() 
                     sum / expenseTotal
                 }
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+    }
+    .flowOn(kotlinx.coroutines.Dispatchers.Default)
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     fun selectTypeFilter(type: String) {
         _selectedTypeFilter.value = type
@@ -108,6 +124,18 @@ class ExpenseViewModel(private val repository: ExpenseRepository) : ViewModel() 
     fun deleteExpense(id: Int) {
         viewModelScope.launch {
             repository.deleteById(id)
+        }
+    }
+
+    fun addPlan(name: String, targetAmount: Double) {
+        viewModelScope.launch {
+            repository.insertPlan(Plan(name = name, targetAmount = targetAmount))
+        }
+    }
+
+    fun deletePlan(id: Int) {
+        viewModelScope.launch {
+            repository.deletePlanById(id)
         }
     }
 

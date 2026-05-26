@@ -29,6 +29,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -51,6 +52,26 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
+@Stable
+class CategoryDistribution(val map: Map<String, Double>)
+
+@Stable
+class CalendarDaysList(val days: List<Int?>)
+
+@Stable
+class MonthExpensesMap(val info: Map<Int, Pair<Boolean, Boolean>>)
+
+object LedgerFormatter {
+    private val currencyFormatter: NumberFormat = NumberFormat.getCurrencyInstance(Locale("en", "IN")).apply {
+        maximumFractionDigits = 2
+    }
+
+    @Synchronized
+    fun format(amount: Double): String {
+        return currencyFormatter.format(amount)
+    }
+}
+
 fun Modifier.glassCard(
     cornerRadius: androidx.compose.ui.unit.Dp = 24.dp,
     borderWidth: androidx.compose.ui.unit.Dp = 1.dp,
@@ -58,23 +79,12 @@ fun Modifier.glassCard(
     alphaMultiplier: Float = 1.0f
 ): Modifier = this
     .background(
-        brush = Brush.verticalGradient(
-            colors = listOf(
-                Color(0x2E1E1E1E).copy(alpha = 0.28f * alphaMultiplier),
-                Color(0x1F0F0F0F).copy(alpha = 0.16f * alphaMultiplier)
-            )
-        ),
+        color = Color(0xFF131215).copy(alpha = 0.85f),
         shape = RoundedCornerShape(cornerRadius)
     )
     .border(
         width = borderWidth,
-        brush = Brush.verticalGradient(
-            colors = listOf(
-                tint.copy(alpha = 0.28f * alphaMultiplier),
-                Color.Transparent,
-                tint.copy(alpha = 0.08f * alphaMultiplier)
-            )
-        ),
+        color = tint.copy(alpha = 0.12f * alphaMultiplier),
         shape = RoundedCornerShape(cornerRadius)
     )
 
@@ -133,7 +143,10 @@ fun ExpenseTrackerApp(
     val expenses by viewModel.filteredExpenses.collectAsStateWithLifecycle()
     val totalIncome by viewModel.totalIncome.collectAsStateWithLifecycle(initialValue = 0.0)
     val totalExpense by viewModel.totalExpense.collectAsStateWithLifecycle(initialValue = 0.0)
-    val categoryDistribution by viewModel.categoryDistribution.collectAsStateWithLifecycle()
+    val plans by viewModel.allPlans.collectAsStateWithLifecycle()
+    var showAddPlanDialog by remember { mutableStateOf(false) }
+    val rawCategoryDistribution by viewModel.categoryDistribution.collectAsStateWithLifecycle()
+    val categoryDistribution = remember(rawCategoryDistribution) { CategoryDistribution(rawCategoryDistribution) }
 
     val selectedType by viewModel.selectedTypeFilter.collectAsStateWithLifecycle()
     val selectedCategory by viewModel.selectedCategoryFilter.collectAsStateWithLifecycle()
@@ -161,13 +174,6 @@ fun ExpenseTrackerApp(
             calendarDailyExpensesList
         } else {
             expenses.take(100)
-        }
-    }
-
-    // Formatting Helpers
-    val currencyFormatter = remember {
-        NumberFormat.getCurrencyInstance(Locale("en", "IN")).apply {
-            maximumFractionDigits = 2
         }
     }
 
@@ -219,23 +225,7 @@ fun ExpenseTrackerApp(
                             )
                         }
 
-                        // Avatar keyframe matching HTML border-[#2D2D2D]
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(DarkSurface)
-                                .border(1.dp, Color(0xFF2D2D2D), CircleShape)
-                                .clickable { showQuickSeedInfo = !showQuickSeedInfo },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Profile",
-                                tint = TextDarkPrimary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        // Profile button removed
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -282,8 +272,7 @@ fun ExpenseTrackerApp(
                             AestheticBalanceCard(
                                 balance = balance,
                                 income = totalIncome,
-                                expense = totalExpense,
-                                formatter = currencyFormatter
+                                expense = totalExpense
                             )
 
                             Spacer(modifier = Modifier.height(20.dp))
@@ -394,8 +383,7 @@ fun ExpenseTrackerApp(
                             item {
                                 AestheticAnalyticsCard(
                                     distribution = categoryDistribution,
-                                    totalExpense = totalExpense,
-                                    formatter = currencyFormatter
+                                    totalExpense = totalExpense
                                 )
                                 Spacer(modifier = Modifier.height(20.dp))
                             }
@@ -490,8 +478,7 @@ fun ExpenseTrackerApp(
                             items(expenses, key = { it.id }) { expense ->
                                 TransactionItemRow(
                                     expense = expense,
-                                    formatter = currencyFormatter,
-                                    onDelete = { viewModel.deleteExpense(expense.id) }
+                                    onDelete = viewModel::deleteExpense
                                 )
                                 Spacer(modifier = Modifier.height(10.dp))
                             }
@@ -527,7 +514,7 @@ fun ExpenseTrackerApp(
                         // 2. Interactive grid showing the days of the month with dynamic indicator highlights
                         item {
                             val daysInMonth = remember(calendarCurrentYear, calendarCurrentMonth) {
-                                getDaysInMonth(calendarCurrentYear, calendarCurrentMonth)
+                                CalendarDaysList(getDaysInMonth(calendarCurrentYear, calendarCurrentMonth))
                             }
                             
                             // High performance O(1) monthly transactions lookup Map
@@ -549,7 +536,7 @@ fun ExpenseTrackerApp(
                                         )
                                     }
                                 }
-                                infoMap
+                                MonthExpensesMap(infoMap)
                             }
 
                             CalendarGridCard(
@@ -569,25 +556,11 @@ fun ExpenseTrackerApp(
                                 java.text.SimpleDateFormat("MMMM d, yyyy", java.util.Locale.US).format(calendarSelectedDate)
                             }
                             
-                            val dailyExpensesList = remember(calendarSelectedDate, expenses) {
-                                val calSelected = java.util.Calendar.getInstance().apply { time = calendarSelectedDate }
-                                val selYear = calSelected.get(java.util.Calendar.YEAR)
-                                val selMonth = calSelected.get(java.util.Calendar.MONTH)
-                                val selDay = calSelected.get(java.util.Calendar.DAY_OF_MONTH)
-                                
-                                val calExpense = java.util.Calendar.getInstance()
-                                expenses.filter { expense ->
-                                    calExpense.timeInMillis = expense.timestamp
-                                    calExpense.get(java.util.Calendar.YEAR) == selYear &&
-                                    calExpense.get(java.util.Calendar.MONTH) == selMonth &&
-                                    calExpense.get(java.util.Calendar.DAY_OF_MONTH) == selDay
-                                }
+                            val dailyExpenseTotal = remember(calendarDailyExpensesList) {
+                                calendarDailyExpensesList.filter { it.type == "EXPENSE" }.sumOf { it.amount }
                             }
-                            val dailyExpenseTotal = remember(dailyExpensesList) {
-                                dailyExpensesList.filter { it.type == "EXPENSE" }.sumOf { it.amount }
-                            }
-                            val dailyIncomeTotal = remember(dailyExpensesList) {
-                                dailyExpensesList.filter { it.type == "INCOME" }.sumOf { it.amount }
+                            val dailyIncomeTotal = remember(calendarDailyExpensesList) {
+                                calendarDailyExpensesList.filter { it.type == "INCOME" }.sumOf { it.amount }
                             }
                             val dailyNet = dailyIncomeTotal - dailyExpenseTotal
 
@@ -596,9 +569,8 @@ fun ExpenseTrackerApp(
                                 dailyExpenseTotal = dailyExpenseTotal,
                                 dailyIncomeTotal = dailyIncomeTotal,
                                 dailyNet = dailyNet,
-                                expenseCount = dailyExpensesList.filter { it.type == "EXPENSE" }.size,
-                                incomeCount = dailyExpensesList.filter { it.type == "INCOME" }.size,
-                                formatter = currencyFormatter
+                                expenseCount = remember(calendarDailyExpensesList) { calendarDailyExpensesList.filter { it.type == "EXPENSE" }.size },
+                                incomeCount = remember(calendarDailyExpensesList) { calendarDailyExpensesList.filter { it.type == "INCOME" }.size }
                             )
                             Spacer(modifier = Modifier.height(18.dp))
                         }
@@ -620,8 +592,7 @@ fun ExpenseTrackerApp(
                             items(calendarDisplayList, key = { "calendar_${it.id}" }) { expense ->
                                 TransactionItemRow(
                                     expense = expense,
-                                    formatter = currencyFormatter,
-                                    onDelete = { viewModel.deleteExpense(expense.id) }
+                                    onDelete = viewModel::deleteExpense
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
@@ -640,8 +611,7 @@ fun ExpenseTrackerApp(
                                 )
                                 AestheticAnalyticsCard(
                                     distribution = categoryDistribution,
-                                    totalExpense = totalExpense,
-                                    formatter = currencyFormatter
+                                    totalExpense = totalExpense
                                 )
                                 Spacer(modifier = Modifier.height(20.dp))
                                 Card(
@@ -672,114 +642,123 @@ fun ExpenseTrackerApp(
                         }
                     }
 
-                    "CARDS" -> {
+                    "PLANS" -> {
                         item {
-                            Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = "Secure Ledger Accounts",
+                                    text = "Active Savings Goals",
                                     fontFamily = FontFamily.Serif,
                                     fontSize = 22.sp,
-                                    color = TextDarkPrimary,
-                                    modifier = Modifier.padding(vertical = 12.dp)
+                                    color = TextDarkPrimary
                                 )
-                                Card(
+
+                                // Add Plan Button
+                                Box(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp)
-                                        .glassCard(cornerRadius = 28.dp, tint = Color.White)
-                                        .background(
-                                            brush = Brush.linearGradient(
-                                                colors = listOf(
-                                                    Color(0x22FFFFFF),
-                                                    Color(0x05FFFFFF)
-                                                )
-                                            ),
-                                            shape = RoundedCornerShape(28.dp)
-                                        ),
-                                    shape = RoundedCornerShape(28.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color.White.copy(alpha = 0.08f))
+                                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                                        .clickable { showAddPlanDialog = true }
+                                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                                        .testTag("add_plan_button"),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(24.dp)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        Column(modifier = Modifier.align(Alignment.TopStart)) {
-                                            Text(
-                                                text = "OBSIDIAN DEBIT",
-                                                fontSize = 9.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = TextDarkSecondary,
-                                                letterSpacing = 2.sp
-                                            )
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(
-                                                text = "Premium Onyx Member",
-                                                fontSize = 14.sp,
-                                                fontFamily = FontFamily.Serif,
-                                                color = TextDarkPrimary
-                                            )
-                                        }
-                                        Text(
-                                            text = "**** **** **** 8850",
-                                            fontFamily = FontFamily.Monospace,
-                                            fontSize = 16.sp,
-                                            color = TextDarkPrimary,
-                                            modifier = Modifier.align(Alignment.CenterStart)
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = "Add Goal",
+                                            tint = GoldAccent,
+                                            modifier = Modifier.size(16.dp)
                                         )
                                         Text(
-                                            text = "VIP LEDGER",
+                                            text = "Add Goal",
                                             fontSize = 11.sp,
-                                            fontFamily = FontFamily.Serif,
-                                            color = GoldAccent,
-                                            modifier = Modifier.align(Alignment.BottomEnd)
+                                            fontWeight = FontWeight.Bold,
+                                            color = GoldAccent
                                         )
                                     }
                                 }
                             }
                         }
-                    }
 
-                    "PLANS" -> {
-                        item {
-                            Text(
-                                text = "Active Savings Goals",
-                                fontFamily = FontFamily.Serif,
-                                fontSize = 22.sp,
-                                color = TextDarkPrimary,
-                                modifier = Modifier.padding(vertical = 12.dp)
-                            )
-                        }
-
-                        items(listOf(
-                            Pair("Kyoto Escapade", 4500.0),
-                            Pair("Hobby Mechanical KB", 350.0),
-                            Pair("Secure Emergency Liquidity", 10000.0)
-                        )) { (planName, targetValue) ->
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 12.dp)
-                                    .glassCard(cornerRadius = 20.dp, tint = GoldAccent),
-                                shape = RoundedCornerShape(20.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                            ) {
-                                Row(
+                        if (plans.isEmpty()) {
+                            item {
+                                Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                        .padding(vertical = 32.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Column {
-                                        Text(text = planName, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDarkPrimary)
-                                        Text(text = "Target: ${currencyFormatter.format(targetValue)}", fontSize = 12.sp, color = TextDarkSecondary)
-                                    }
-                                    Icon(
-                                        imageVector = Icons.Default.Star,
-                                        tint = GoldAccent,
-                                        contentDescription = "Starred goal"
+                                    Text(
+                                        text = "No active savings goals. Tap 'Add Goal' to create one.",
+                                        fontSize = 13.sp,
+                                        color = TextDarkSecondary.copy(alpha = 0.6f),
+                                        textAlign = TextAlign.Center
                                     )
+                                }
+                            }
+                        } else {
+                            items(plans, key = { it.id }) { plan ->
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 12.dp)
+                                        .glassCard(cornerRadius = 20.dp, tint = GoldAccent),
+                                    shape = RoundedCornerShape(20.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text(text = plan.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDarkPrimary)
+                                            Text(text = "Target: ${LedgerFormatter.format(plan.targetAmount)}", fontSize = 12.sp, color = TextDarkSecondary)
+                                        }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Star,
+                                                tint = GoldAccent,
+                                                contentDescription = "Starred goal",
+                                                modifier = Modifier.size(20.dp)
+                                            )
+
+                                            // Sleek delete button
+                                            IconButton(
+                                                onClick = { viewModel.deletePlan(plan.id) },
+                                                modifier = Modifier
+                                                    .size(28.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color.White.copy(alpha = 0.08f))
+                                                    .testTag("delete_plan_button_${plan.id}")
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = "Delete Goal",
+                                                    tint = RedAccent,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -830,13 +809,7 @@ fun ExpenseTrackerApp(
                         onClick = { activeTab = "STATS" }
                     )
 
-                    // Cards Tab
-                    BottomNavItem(
-                        icon = Icons.Default.CreditCard,
-                        label = "CARDS",
-                        isActive = activeTab == "CARDS",
-                        onClick = { activeTab = "CARDS" }
-                    )
+                    // Cards Tab removed
 
                     // Plans Tab
                     BottomNavItem(
@@ -880,6 +853,16 @@ fun ExpenseTrackerApp(
                 }
             )
         }
+
+        if (showAddPlanDialog) {
+            AddPlanOverlay(
+                onDismiss = { showAddPlanDialog = false },
+                onSave = { name, targetAmount ->
+                    viewModel.addPlan(name, targetAmount)
+                    showAddPlanDialog = false
+                }
+            )
+        }
     }
 }
 
@@ -919,8 +902,7 @@ fun BottomNavItem(
 fun AestheticBalanceCard(
     balance: Double,
     income: Double,
-    expense: Double,
-    formatter: NumberFormat
+    expense: Double
 ) {
     Card(
         modifier = Modifier
@@ -1018,7 +1000,7 @@ fun AestheticBalanceCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = formatter.format(income),
+                        text = LedgerFormatter.format(income),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = EmeraldAccent
@@ -1042,7 +1024,7 @@ fun AestheticBalanceCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = formatter.format(balance),
+                        text = LedgerFormatter.format(balance),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (balance >= 0) GoldAccent else RedAccent
@@ -1055,9 +1037,8 @@ fun AestheticBalanceCard(
 
 @Composable
 fun AestheticAnalyticsCard(
-    distribution: Map<String, Double>,
-    totalExpense: Double,
-    formatter: NumberFormat
+    distribution: CategoryDistribution,
+    totalExpense: Double
 ) {
     Card(
         modifier = Modifier
@@ -1078,7 +1059,7 @@ fun AestheticAnalyticsCard(
             )
             Spacer(modifier = Modifier.height(14.dp))
 
-            if (distribution.isEmpty()) {
+            if (distribution.map.isEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1104,7 +1085,7 @@ fun AestheticAnalyticsCard(
                     ) {
                         Canvas(modifier = Modifier.size(68.dp)) {
                             var startAngle = -90f
-                            distribution.forEach { (categoryId, percentage) ->
+                            distribution.map.forEach { (categoryId, percentage) ->
                                 val category = CategoryHelper.getCategory(categoryId)
                                 val sweepAngle = (percentage * 360f).toFloat()
 
@@ -1142,7 +1123,7 @@ fun AestheticAnalyticsCard(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         // Take top 3 spent items
-                        val sortedEntries = distribution.entries.sortedByDescending { it.value }.take(3)
+                        val sortedEntries = distribution.map.entries.sortedByDescending { it.value }.take(3)
                         sortedEntries.forEach { entry ->
                             val category = CategoryHelper.getCategory(entry.key)
                             val percentText = String.format("%.0f%%", entry.value * 100)
@@ -1355,8 +1336,7 @@ fun CategoryBadge(
 @Composable
 fun TransactionItemRow(
     expense: Expense,
-    formatter: NumberFormat,
-    onDelete: () -> Unit
+    onDelete: (Int) -> Unit
 ) {
     val category = remember(expense.category) { CategoryHelper.getCategory(expense.category) }
     val isExpense = expense.type == "EXPENSE"
@@ -1423,7 +1403,7 @@ fun TransactionItemRow(
             Column(
                 horizontalAlignment = Alignment.End
             ) {
-                val formattedAmount = formatter.format(expense.amount)
+                val formattedAmount = remember(expense.amount) { LedgerFormatter.format(expense.amount) }
                 Text(
                     text = if (isExpense) "-$formattedAmount" else "+$formattedAmount",
                     fontSize = 14.sp,
@@ -1444,7 +1424,7 @@ fun TransactionItemRow(
 
             // Micro delete button
             IconButton(
-                onClick = onDelete,
+                onClick = { onDelete(expense.id) },
                 modifier = Modifier
                     .size(28.dp)
                     .clip(CircleShape)
@@ -1508,22 +1488,6 @@ fun AddTransactionOverlay(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xD8050508)) // Safe elegant dark glass tint
-            .drawBehind {
-                // High-fidelity micro-fiber frosted glass simulation lines with efficient spacing
-                val strokeWidth = 1f
-                val spacing = 140f
-                var offset = 0f
-                val limit = size.width + size.height
-                while (offset < limit) {
-                    drawLine(
-                        color = Color(0x0AFFFFFF), // ultra subtle premium refraction line
-                        start = Offset(offset, 0f),
-                        end = Offset(0f, offset),
-                        strokeWidth = strokeWidth
-                    )
-                    offset += spacing
-                }
-            }
             .clickable {
                 handleDismiss()
             }, // Dismiss when tapping outer mask
@@ -1918,8 +1882,8 @@ fun CalendarHeaderSection(
 fun CalendarGridCard(
     currentYear: Int,
     currentMonth: Int,
-    daysInMonth: List<Int?>,
-    monthExpensesInfo: Map<Int, Pair<Boolean, Boolean>>,
+    daysInMonth: CalendarDaysList,
+    monthExpensesInfo: MonthExpensesMap,
     selectedDate: java.util.Date,
     onSelectDate: (java.util.Date) -> Unit
 ) {
@@ -1958,7 +1922,7 @@ fun CalendarGridCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val totalCells = daysInMonth.size
+            val totalCells = daysInMonth.days.size
             var cellIndex = 0
             while (cellIndex < totalCells) {
                 Row(
@@ -1968,7 +1932,7 @@ fun CalendarGridCard(
                 ) {
                     for (col in 0..6) {
                         if (cellIndex < totalCells) {
-                            val day = daysInMonth[cellIndex]
+                            val day = daysInMonth.days[cellIndex]
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -1978,7 +1942,7 @@ fun CalendarGridCard(
                             ) {
                                 if (day != null) {
                                     val isSelected = currentYear == sYear && currentMonth == sMonth && day == sDay
-                                    val dayInfo = monthExpensesInfo[day]
+                                    val dayInfo = monthExpensesInfo.info[day]
                                     val hasIncome = dayInfo?.first == true
                                     val hasExpense = dayInfo?.second == true
 
@@ -2061,8 +2025,7 @@ fun CalendarDailyStatsCard(
     dailyIncomeTotal: Double,
     dailyNet: Double,
     expenseCount: Int,
-    incomeCount: Int,
-    formatter: java.text.NumberFormat
+    incomeCount: Int
 ) {
     Text(
         text = "Daily Tracker • $selectedDateStr",
@@ -2095,8 +2058,9 @@ fun CalendarDailyStatsCard(
                         color = TextDarkSecondary.copy(alpha = 0.5f),
                         letterSpacing = 1.sp
                     )
+                    val specVal = remember(dailyExpenseTotal) { LedgerFormatter.format(dailyExpenseTotal) }
                     Text(
-                        text = formatter.format(dailyExpenseTotal),
+                        text = specVal,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (dailyExpenseTotal > 0) RedAccent else TextDarkPrimary
@@ -2118,8 +2082,9 @@ fun CalendarDailyStatsCard(
                         color = TextDarkSecondary.copy(alpha = 0.5f),
                         letterSpacing = 1.sp
                     )
+                    val specVal = remember(dailyIncomeTotal) { LedgerFormatter.format(dailyIncomeTotal) }
                     Text(
-                        text = formatter.format(dailyIncomeTotal),
+                        text = specVal,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (dailyIncomeTotal > 0) EmeraldAccent else TextDarkPrimary
@@ -2141,8 +2106,9 @@ fun CalendarDailyStatsCard(
                         color = TextDarkSecondary.copy(alpha = 0.5f),
                         letterSpacing = 1.sp
                     )
+                    val specVal = remember(dailyNet) { LedgerFormatter.format(dailyNet) }
                     Text(
-                        text = (if (dailyNet >= 0) "+" else "") + formatter.format(dailyNet),
+                        text = (if (dailyNet >= 0) "+" else "") + specVal,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (dailyNet >= 0) EmeraldAccent else RedAccent
@@ -2266,4 +2232,167 @@ fun isSameDay(timestamp: Long, date: java.util.Date): Boolean {
     return cal1.get(java.util.Calendar.YEAR) == cal2.get(java.util.Calendar.YEAR) &&
            cal1.get(java.util.Calendar.MONTH) == cal2.get(java.util.Calendar.MONTH) &&
            cal1.get(java.util.Calendar.DAY_OF_MONTH) == cal2.get(java.util.Calendar.DAY_OF_MONTH)
+}
+
+@Composable
+fun AddPlanOverlay(
+    onDismiss: () -> Unit,
+    onSave: (String, Double) -> Unit
+) {
+    var nameText by remember { mutableStateOf("") }
+    var targetText by remember { mutableStateOf("") }
+
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+
+    val handleDismiss = {
+        focusManager.clearFocus()
+        keyboardController?.hide()
+        onDismiss()
+    }
+
+    // Modal Sheet Overlay Custom UI Box (Frosted Glass Mask)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xD8050508)) // Safe elegant dark glass tint
+            .clickable {
+                handleDismiss()
+            }, // Dismiss when tapping outer mask
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        // Inner card body (Breathtaking glass bottom sheet)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                .glassCard(cornerRadius = 28.dp, tint = Color.White, alphaMultiplier = 1.3f)
+                .clickable(enabled = false) {} // block click throughs
+                .windowInsetsPadding(WindowInsets.ime) // adjust for keyboard sliding
+                .navigationBarsPadding()
+                .padding(22.dp)
+                .testTag("add_plan_dialog_body")
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Header drag indicator bar look
+                Box(
+                    modifier = Modifier
+                        .size(36.dp, 4.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.2f))
+                        .align(Alignment.CenterHorizontally)
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "New Savings Goal",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextDarkPrimary
+                    )
+                    IconButton(onClick = handleDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cancel",
+                            tint = TextDarkSecondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Name/Title Field
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "GOAL NAME", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = TextDarkMuted)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    BasicTextField(
+                        value = nameText,
+                        onValueChange = { nameText = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .glassCard(cornerRadius = 14.dp, tint = Color.White, alphaMultiplier = 0.3f)
+                            .padding(14.dp)
+                            .testTag("plan_name_input"),
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            color = TextDarkPrimary,
+                            fontSize = 14.sp
+                        ),
+                        cursorBrush = SolidColor(TextDarkPrimary),
+                        decorationBox = { innerTextField ->
+                            if (nameText.isEmpty()) {
+                                Text("e.g. Dream Vacation", color = TextDarkSecondary.copy(alpha = 0.4f), fontSize = 14.sp)
+                            }
+                            innerTextField()
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Target Amount Field
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "TARGET AMOUNT", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = TextDarkMuted)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    BasicTextField(
+                        value = targetText,
+                        onValueChange = { input ->
+                            if (input.isEmpty() || input.matches(Regex("^\\d*\\.?\\d{0,2}$"))) {
+                                targetText = input
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .glassCard(cornerRadius = 14.dp, tint = Color.White, alphaMultiplier = 0.3f)
+                            .padding(14.dp)
+                            .testTag("plan_target_input"),
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            color = TextDarkPrimary,
+                            fontSize = 14.sp
+                        ),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        cursorBrush = SolidColor(TextDarkPrimary),
+                        decorationBox = { innerTextField ->
+                            if (targetText.isEmpty()) {
+                                Text("e.g. 5000.00", color = TextDarkSecondary.copy(alpha = 0.4f), fontSize = 14.sp)
+                            }
+                            innerTextField()
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Save button
+                val isValid = nameText.trim().isNotEmpty() && targetText.trim().toDoubleOrNull() != null && (targetText.trim().toDoubleOrNull() ?: 0.0) > 0
+                Button(
+                    onClick = {
+                        val amt = targetText.trim().toDoubleOrNull() ?: 0.0
+                        onSave(nameText.trim(), amt)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .testTag("save_plan_button"),
+                    enabled = isValid,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GoldAccent,
+                        contentColor = Color.Black,
+                        disabledContainerColor = Color.White.copy(alpha = 0.1f),
+                        disabledContentColor = TextDarkSecondary.copy(alpha = 0.4f)
+                    ),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text("Save Savings Goal", fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                }
+            }
+        }
+    }
 }
