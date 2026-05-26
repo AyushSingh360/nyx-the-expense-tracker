@@ -2,8 +2,6 @@
 
 Nyx is a highly sophisticated, offline-first personal ledger application for Android, built with **Jetpack Compose** and **Room Database**. Embracing a premium, low-contrast dark aesthetic inspired by obsidian stone, gold metallic accents, and fluid typography, Nyx is designed for high-precision financial logging and cognitive-load-free visual budgeting.
 
-[![Sponsor AyushSingh360](https://img.shields.io/badge/Sponsor-AyushSingh360-E5C158?style=for-the-badge&logo=github-sponsors&logoColor=0E0E0E)](https://github.com/sponsors/AyushSingh360)
-
 ```
        .---.            
       /     \           🌌 NYX LEDGER SYSTEM
